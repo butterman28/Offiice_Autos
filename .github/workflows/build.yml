@@ -30,6 +30,7 @@ jobs:
           pip install -r requirements.txt pyinstaller
 
       - name: 🛠️ Build Executable
+        shell: bash
         run: |
           pyinstaller --onefile --windowed \
             --hidden-import docx \
