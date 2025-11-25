@@ -64,7 +64,7 @@ jobs:
           else
             cp dist/DOCX_Generator release/docx-generator
             chmod +x release/docx-generator
-            tar -czf release/DOCX_Generator_Linux.tar.gz -C release docx-generator template.docx README.md
+            tar -czf release/DOCX_Generator_Linux.tar.gz -C release docx-generator
           fi
 
       - name: 📤 Upload Artifacts
