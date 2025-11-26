@@ -15,16 +15,7 @@ A lightweight desktop tool to **batch-generate Word documents** from Excel or CS
 
 ### 1️⃣ Download the App
 ✅ **Pre-built executables (no Python required!)**  
-⬇️ Get the latest version from [**Releases**](https://github.com/butterman28/Offiice_Autos/releases/latest) or use these direct links:
-
-| Platform | File | 
-|----------|------|
-| **Windows** | [`DOCX_Generator_Win64.zip`](https://nightly.link/butterman28/Offiice_Autos/workflows/build/main/DOCX_Generator-windows-latest.zip) | 
-| **macOS** | [`DOCX_Generator_macOS.zip`](https://nightly.link/butterman28/Offiice_Autos/workflows/build/main/DOCX_Generator-macos-latest.zip) |
-| **Linux** | [`DOCX_Generator_Linux.tar.gz`](https://nightly.link/butterman28/Offiice_Autos/workflows/build/main/DOCX_Generator-ubuntu-latest.tar.gz) | 
-
-> 💡 **Pro tip**: Nightly links always point to the **latest successful build** — ideal for testing.
-
+⬇️ Get the latest version from [**Releases**](https:/
 ### 2️⃣ Run the App
 - **Windows**: Extract ZIP → double-click `DOCX_Generator.exe`  
 - **macOS**: Extract ZIP → drag `DOCX Generator.app` to `Applications` → run  
