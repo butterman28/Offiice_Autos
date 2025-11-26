@@ -16,6 +16,19 @@ from tkinter import (
 )
 
 
+def show_help():
+    help_text = (
+        "📌 How to use DOCX Generator:\n\n"
+        "1️⃣ Select a Word template with placeholders like {{Name}}\n"
+        "2️⃣ Select a CSV or XLSX file (headers = placeholder names)\n"
+        "3️⃣ Click 'Generate Documents' → choose output folder\n\n"
+        "💡 Tip: Field names must EXACTLY match headers (case & space sensitive!)\n\n"
+        "📥 Download latest version:\n"
+        "https://github.com/butterman28/Offiice_Autos/releases"
+    )
+    messagebox.showinfo("Help", help_text)
+
+
 def replace_placeholders(doc, data):
     # Clean data: convert keys to str, handle None/NaN
     clean_data = {}
@@ -165,6 +178,8 @@ def run_app():
 
     generate_btn = Button(root, text="Generate Documents", command=on_generate)
     generate_btn.pack(pady=10)
+    help_btn = Button(root, text="ℹ️ Help", command=lambda: show_help())
+    help_btn.pack(pady=5)
 
     def browse_template(var):
         path = select_template()
