@@ -91,20 +91,29 @@ ipcMain.handle("move-file", async (event, { src, destFolder }) => {
     }
 });
 
-// 
 ipcMain.handle('delete-item', async (event, path) => {
+    // 🔒 Validate input
+    if (!path || typeof path !== 'string') {
+        return { success: false, error: 'Invalid path' };
+    }
+
     try {
-        const stats = await fs.promises.stat(path);
+        // ✅ Use the imported fs.promises directly
+        const stats = await fs.stat(path);
+        
         if (stats.isDirectory()) {
-            await fs.promises.rmdir(path, { recursive: true });
+            await fs.rm(path, { recursive: true, force: true }); // ✅ fs.rm (modern) or rmdir
         } else {
-            await fs.promises.unlink(path);
+            await fs.unlink(path);
         }
+        
         return { success: true };
     } catch (err) {
+        console.error('Delete failed:', path, err);
         return { success: false, error: err.message };
     }
 });
+
 
 
 // ---- Copy a file ----

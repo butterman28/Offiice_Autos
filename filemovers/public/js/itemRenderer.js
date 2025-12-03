@@ -83,17 +83,24 @@ const ItemRenderer = {
         });
 
         deleteBtn.on("click", async (e) => {
-            e.cancelBubble = true;
+            if (e.evt){
+            e.evt.preventDefault();
+            e.evt.stopPropagation();
+            }
+            console.log(item.path)
+            //e.cancelBubble = true;
             const type = isDir ? 'folder' : 'file';
             if (!confirm(`Delete ${type} "${item.name}"? This cannot be undone.`)) return;
 
             try {
                 const result = await window.api.deleteItem(item.path);
+                console.log("123")
+                //FolderGroup.refreshAllGroups(this.layer);
                 if (result.success) {
                     itemContainer.destroy();
                     ItemRenderer.recalculatePositions(listGroup, lineHeight);
                     if (listGroup.updateScrollbar) listGroup.updateScrollbar();
-                    AppState.removeArrowsByPath(item.path);
+                    //AppState.removeArrowsByPath(item.path);
                     layer.batchDraw();
                     MUIToolbar?.showSnackbar(`${type} deleted`, "success");
                 } else throw new Error(result.error);
@@ -264,14 +271,20 @@ const ItemRenderer = {
         });
 
         deleteBtn.on("click", async (e) => {
-            e.cancelBubble = true;
+            if (e.evt){
+            e.evt.preventDefault();
+            e.evt.stopPropagation();
+            }
+            //e.cancelBubble = true;
             const type = isDir ? 'folder' : 'file';
             if (!confirm(`Delete ${type} "${item.name}"? This cannot be undone.`)) return;
 
             try {
                 const result = await window.api.deleteItem(item.path);
+                 FolderGroup.refreshAllGroups(layer);
                 if (result.success) {
                     container.destroy();
+                    //FolderGroup.refreshAllGroups(layer);
                     // Refresh parent scroll group
                     let pg = parentGroup;
                     while (pg && !pg.updateScrollbar && pg.getParent()) pg = pg.getParent();

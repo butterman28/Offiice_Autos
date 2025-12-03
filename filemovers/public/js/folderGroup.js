@@ -15,6 +15,46 @@ class FolderGroup {
         };
     }
 
+    // ✅ NEW: Refresh ALL folder groups (e.g., after move/copy)
+static refreshAllGroups(layer) {
+    // Snapshot current positions & data before destroy
+    const groupSnapshots = AppState.groups.map(g => ({
+        type: g.type,
+        x: g.group.x(),
+        y: g.group.y(),
+        title: g.titleText.text(),
+        currentPath: g.currentPath,
+        isSource: g.isSource
+    }));
+
+    // Destroy all groups
+    AppState.groups.forEach(g => g.group.destroy());
+    AppState.groups = [];
+
+    // Recreate all groups
+    const folderGroupManager = new FolderGroup(layer);
+    groupSnapshots.forEach(snapshot => {
+        (async () => {
+            try {
+                const items = await window.api.readFolder(snapshot.currentPath);
+                folderGroupManager.create({
+                    type: snapshot.type,
+                    x: snapshot.x,
+                    y: snapshot.y,
+                    title: snapshot.title,
+                    items,
+                    currentPath: snapshot.currentPath,
+                    isSource: snapshot.isSource
+                });
+            } catch (err) {
+                console.error("Failed to refresh group:", snapshot.title, err);
+                if (MUIToolbar) {
+                    MUIToolbar.showSnackbar(`❌ Failed to reload ${snapshot.title}`, "error");
+                }
+            }
+        })();
+    });
+}
     create({ type, x, y, title, items = [], currentPath, isSource = true }) {
         const group = new Konva.Group({ x, y, draggable: true });
         const { padding, lineHeight, titleHeight, width } = this.config;

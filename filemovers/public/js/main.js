@@ -89,15 +89,26 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById("execute-move").onclick = () => {
         FileTransfer.execute("move");
         AppState.clearArrows();
+        layer.batchDraw();
+        FolderGroup.refreshAllGroups(layer);
     }
     document.getElementById("execute-copy").onclick = () => {
         FileTransfer.execute("copy");
         AppState.clearArrows();
         layer.batchDraw();
-        MUIToolbar.updateStats();
-        MUIToolbar.showSnackbar(`Cleared ${count} connection${count !== 1 ? 's' : ''}`, "info");
+        FolderGroup.refreshAllGroups(layer);
     }
-
+document.getElementById("execute-move").onclick = async () => {
+    MUIToolbar.showSnackbar("🔄 Moving files...", "info");
+    try {
+        await FileTransfer.execute("move");
+        AppState.clearArrows();
+        FolderGroup.refreshAllGroups(layer);
+        MUIToolbar.showSnackbar("✅ Move completed", "success");
+    } catch (err) {
+        MUIToolbar.showSnackbar(`❌ Move failed: ${err.message}`, "error");
+    }
+};
     
     // Toolbar: Clear arrows
     document.getElementById("clear-arrows").onclick = () => {
