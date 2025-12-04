@@ -2,7 +2,7 @@
   "name": "filemovers",
   "version": "1.0.0",
   "description": "Konva Explorer - File management application",
-  "homepage": "https://github.com/YOURNAME/YOURREPO",
+  "homepage": "https://github.com/YOUR_NAME/YOUR_REPO",
   "author": {
     "name": "Your Name",
     "email": "you@example.com"
@@ -37,19 +37,33 @@
       "category": "Utility",
       "icon": "public/icon.png",
       "maintainer": "Your Name <you@example.com>",
-
       "target": [
-        { "target": "AppImage", "arch": ["x64"] },
-        { "target": "tar.gz", "arch": ["x64"] },   // UNIVERSAL Linux binary
-        { "target": "deb", "arch": ["x64"] }
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "tar.gz",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
       ]
     },
 
     "win": {
       "icon": "public/icon.ico",
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
       ]
     },
 
@@ -57,7 +71,10 @@
       "icon": "public/icon.icns",
       "category": "public.app-category.utilities",
       "target": [
-        { "target": "dmg", "arch": ["x64", "arm64"] }
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
       ]
     }
   },
