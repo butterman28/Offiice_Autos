@@ -1,0 +1,62 @@
+name: Build Electron Executables
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        # Build for all three major operating systems sequentially
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: false
+      
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      # 1. Setup Node.js Environment
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Use a modern LTS version
+          # Cache dependencies specific to the filemovers project directory
+          cache: 'npm'
+          cache-dependency-path: filemovers/package-lock.json
+
+      # 2. Install Dependencies
+      - name: 📦 Install Project Dependencies
+        # This command runs inside the 'filemovers' folder
+        run: npm install
+        working-directory: filemovers
+
+      # 3. Build Executables
+      - name: 🔨 Build Executables with Electron-Builder
+        # Runs the "dist" script defined in package.json
+        run: npm run dist
+        working-directory: filemovers
+
+      # 4. Upload Artifacts
+      - name: 📤 Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          # The output goes to filemovers/dist/
+          name: Konva_Explorer_${{ matrix.os }}
+          path: filemovers/dist/
+          retention-days: 7
+          
+      # 5. Create GitHub Release
+      - name: 🚀 Create GitHub Release
+        # Only runs when you push a tag like v1.0.0
+        if: startsWith(github.ref, 'refs/tags/v') 
+        uses: softprops/action-gh-release@v2
+        with:
+          # Point the release files to the output directory
+          files: filemovers/dist/*
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: true
