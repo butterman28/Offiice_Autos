@@ -24,46 +24,42 @@
     "productName": "Konva Explorer",
 
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "public"
     },
 
+    "asar": true,
+    "npmRebuild": false,
+    "compression": "maximum",
+
     "files": [
-      "**/*",
-      "!**/.git/**/*",
-      "!**/node_modules/.cache/**/*"
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "public/**/*",
+      "assets/**/*",
+      "package.json"
     ],
+
+    "extraResources": [],
+    "extraFiles": [],
 
     "linux": {
       "category": "Utility",
-      "icon": "public/icon.png",
       "maintainer": "Your Name <you@example.com>",
+      "icon": "public/icon.png",
       "target": [
-        {
-          "target": "AppImage",
-          "arch": ["x64"]
-        },
-        {
-          "target": "tar.gz",
-          "arch": ["x64"]
-        },
-        {
-          "target": "deb",
-          "arch": ["x64"]
-        }
+        "AppImage",
+        "tar.gz",
+        "deb"
       ]
     },
 
     "win": {
       "icon": "public/icon.ico",
       "target": [
-        {
-          "target": "nsis",
-          "arch": ["x64"]
-        },
-        {
-          "target": "portable",
-          "arch": ["x64"]
-        }
+        "nsis",
+        "portable"
       ]
     },
 
