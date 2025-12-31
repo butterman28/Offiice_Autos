@@ -24,15 +24,15 @@ const FileTransfer = {
 
                 if (operation === "move") {
                 if (isFolder) {
-                    await window.api.moveFolder(conn.srcPath, conn.destFolderPath);
+                    await fileapi.moveFolder(conn.srcPath, conn.destFolderPath);
                 } else {
-                    await window.api.moveFile(conn.srcPath, conn.destFolderPath);
+                    await fileapi.moveFile(conn.srcPath, conn.destFolderPath);
                 }
                 } else { // copy
                 if (isFolder) {
-                    await window.api.copyFolder(conn.srcPath, conn.destFolderPath);
+                    await fileapi.copyFolder(conn.srcPath, conn.destFolderPath);
                 } else {
-                    await window.api.copyFile(conn.srcPath, conn.destFolderPath);
+                    await fileapi.copyFile(conn.srcPath, conn.destFolderPath);
                 }
                 }
 

@@ -36,7 +36,7 @@ static refreshAllGroups(layer) {
     groupSnapshots.forEach(snapshot => {
         (async () => {
             try {
-                const items = await window.api.readFolder(snapshot.currentPath);
+                const items = await fileapi.readFolder(snapshot.currentPath);
                 folderGroupManager.create({
                     type: snapshot.type,
                     x: snapshot.x,
@@ -285,10 +285,10 @@ static refreshAllGroups(layer) {
         if (!folderName) return;
 
         try {
-            const result = await window.api.createFolder(parentPath, folderName);
+            const result = await fileapi.createFolder(parentPath, folderName);
 
             if (result.success) {
-                const newItems = await window.api.readFolder(parentPath);
+                const newItems = await fileapi.readFolder(parentPath);
                 const parentName = parentPath.split(/[/\\]/).pop() || "Root";
                 await this.refresh(group, newItems, parentPath, `📁 ${parentName}`);
                 

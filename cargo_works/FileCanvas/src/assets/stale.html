@@ -1,0 +1,100 @@
+ panel.innerHTML = `
+      <div class="flex items-start justify-between drag-handle
+            bg-slate-200 border-b border-slate-300
+            px-4 py-2 rounded-t-xl cursor-move relative">
+            <span class="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400">
+              ⋮⋮
+            </span>
+        <div class="flex items-center gap-3 mb-3">
+          <i class="fas ${icon} text-lg ${isSource ? 'text-indigo-600' : 'text-blue-600'}"></i>
+          <h2 class="text-lg font-semibold ${isSource ? 'text-indigo-800' : 'text-blue-800'}">${label}</h2>
+        </div>
+        <!--
+        <button
+          class="px-2 text-lg font-bold text-slate-500
+                hover:text-slate-800
+                transition-transform"
+          data-collapse="${id}"
+          title="Collapse panel">
+          ▾
+        </button>
+
+        <!-- Close (window-style) -->
+        <button
+        class="ml-auto px-2 text-lg font-bold text-gray-600
+        hover:text-white hover:bg-red-500
+              rounded transition-colors"
+        data-close="${id}">
+        ×
+      </button>
+      </div>
+      <input 
+        type="text" 
+        value="${value}"
+        placeholder="${placeholder}" 
+        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-${isSource ? 'indigo' : 'blue'}-500 focus:border-transparent outline-none mt-2"
+      />
+      <div class="tree-container mt-3 border-t pt-2 pr-8 max-h-[260px] overflow-y-auto overscroll-contain"></div>
+
+    `;
+
+    if (item.justTransferred === true) {
+            console.log("files work")
+            label.classList.add("text-green-600", "font-bold");
+          } else {
+            console.log("files dont work ")
+            label.classList.add("text-gray-700");
+          }
+
+
+  
+          label.dataset.folderPath = item.path;
+          if (item.justTransferred === true) {
+            console.log("got cha ")
+            label.classList.add("text-green-600", "font-bold");
+          } else {
+            console.log("o ti lor ")
+            label.classList.add("text-indigo-700", "font-medium");
+          }
+
+
+          / 🔁 REFRESH UI (UNCHANGED except no flag injection)
+  for (const path of pathsToRefresh) {
+
+    const folderDot = document.querySelector(
+      `[data-folder-path="${path}"]`
+    );
+    
+
+    if (folderDot) {
+      const li = folderDot.closest('li');
+      if (li) {
+        const children = await fileapi.readFolder(path);
+        const panel = li.closest('[id^="panel-"]');
+        const sortBy = panelSortOrder.get(panel?.id) || 'name';
+        const sorted = sortItems(children, sortBy);
+        const subtreeContainer = li.querySelector('.subtree-container');
+
+        if (subtreeContainer) {
+          subtreeContainer.innerHTML = '';
+          subtreeContainer.appendChild(renderTree(sorted, fileapi));
+        }
+      }
+    } else {
+      const panel = document
+        .querySelector(`[id^="panel-"] input[value="${path}"]`)
+        ?.closest('[id^="panel-"]');
+
+      if (panel) {
+        const treeContainer = panel.querySelector('.tree-container');
+        if (treeContainer) {
+          treeContainer.textContent = "Loading...";
+          const children = await fileapi.readFolder(path);
+          const sortBy = panelSortOrder.get(panel.id) || 'name';
+          const sorted = sortItems(children, sortBy);
+          treeContainer.textContent = "";
+          treeContainer.appendChild(renderTree(sorted, fileapi));
+        }
+      }
+    }
+  }

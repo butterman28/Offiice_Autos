@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>File Transfer Control</title>
+  <link rel="stylesheet" href="./output.css" />
+  <script type="module" src="./main.js"></script>
+
+ 
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Navbar -->
+  <nav class="bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+    <div class="flex flex-wrap items-center justify-start gap-2 md:gap-3">
+      <button id="addSourceBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg flex items-center gap-2 transition-colors shadow-sm">
+        <i class="fas fa-folder-plus"></i>
+        Add Source
+      </button>
+      <button id="addDestinationBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg flex items-center gap-2 transition-colors shadow-sm">
+        <i class="fas fa-plus-circle"></i>
+        Add Destination
+      </button>
+      <div class="h-6 w-px bg-gray-300 mx-1 hidden md:block"></div>
+
+      <button id="clearAllBtn" class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white font-medium rounded-lg flex items-center gap-2 transition-colors shadow-sm">
+        <i class="fas fa-ban"></i>
+        Clear All
+      </button>
+      <button id="clearAllarr" class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white font-medium rounded-lg flex items-center gap-2 transition-colors shadow-sm">
+        <i class="fas fa-ban"></i>
+        Clear All Arrows
+      </button>
+     <button id="blueprintBtn" 
+      class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg flex items-center gap-2 transition-colors shadow-sm">
+
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10 0-1.657.402-3.22 1.125-4.575M6.225 6.225A9.956 9.956 0 0112 5 c5.523 0 10 4.477 10 10 0 1.657-.402 3.22-1.125 4.575M15 12 a3 3 0 11-6 0 3 3 0 016 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18"/>
+      </svg>
+
+      <span>Show All Connections</span> <!-- 👈 Wrap in span -->
+    </button>
+
+      <div class="h-6 w-px bg-gray-300 mx-1 hidden md:block"></div>
+
+      <div id ="move"class="flex gap-2">
+        <button  class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg flex items-center gap-2 transition-colors shadow-sm">
+          <i class="fas fa-arrow-right"></i>
+          Move
+        </button>
+        <button id ="copy" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-lg flex items-center gap-2 transition-colors shadow-sm">
+          <i class="fas fa-copy"></i>
+          Copy
+        </button>
+        <button
+          onclick="openFeedbackModal('bug')"
+          class="px-3 py-2 bg-red-100 text-red-700 rounded"
+        >
+          Report Bug
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Dynamic Panel Container -->
+  <main class="p-6">
+    <div id="panelsContainer" class="max-w-4xl mx-auto space-y-4">
+      <!-- Panels appear here -->
+    </div>
+  </main>
+
+  <!-- Load ES Module -->
+<!-- Confirmation Modal -->
+<!-- Confirmation Modal -->
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="hidden fixed inset-0 bg-[rgba(0,0,0,0.2)] flex items-center justify-center z-[30000]">
+  <div class="bg-white/95 backdrop-blur-sm rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-white/20">
+    <h3 class="text-lg font-semibold text-gray-800 mb-2">Confirm Action</h3>
+    <p class="text-gray-600 mb-4" id="confirmModalMessage"></p>
+    <div class="flex gap-3">
+      <button id="confirmModalYes" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition shadow-md">
+        Confirm
+      </button>
+      <button id="confirmModalNo" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg transition shadow">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+  <!-- Snackbar container (hidden by default) -->
+  <div id="snackbar" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 
+      px-4 py-3 rounded-lg shadow-lg text-white font-medium z-[20000]
+      bg-red-500 opacity-0 pointer-events-none
+      transition-all duration-300 ease-in-out">
+  </div>
+  
+  <!-- Feedback Modal -->
+<div id="feedbackModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+    
+    <h2 id="feedbackTitle" class="text-lg font-semibold mb-4">
+      Submit Feedback
+    </h2>
+
+    <form id="feedbackForm" class="space-y-4">
+      <input type="hidden" id="feedbackType" />
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Title</label>
+        <input
+          id="feedbackTitleInput"
+          type="text"
+          required
+          class="w-full mt-1 px-3 py-2 border rounded focus:outline-none focus:ring focus:ring-indigo-200"
+          placeholder="Short summary"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Details</label>
+        <textarea
+          id="feedbackBody"
+          required
+          rows="4"
+          class="w-full mt-1 px-3 py-2 border rounded focus:outline-none focus:ring focus:ring-indigo-200"
+          placeholder="Describe the issue or suggestion"
+        ></textarea>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-4">
+        <button
+          type="button"
+          id="cancelFeedback"
+          class="px-4 py-2 rounded bg-gray-100 hover:bg-gray-200"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+        >
+          Submit
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+</body>
+</html>

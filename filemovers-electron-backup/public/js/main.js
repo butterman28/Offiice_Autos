@@ -17,7 +17,7 @@ window.addEventListener("DOMContentLoaded", () => {
     stage.add(layer);
     
     //const folderGroupManager = new FolderGroup(layer);
-    const folderGroupManager = new FolderGroup(layer, stage);
+    const folderGroupManager = new FolderGroup(layer);
     // ✅ REMOVED: Old connection tracking - now handled inside ConnectionManager
     // stage.on("mousemove", () => {
     //     ConnectionManager.updateConnectionLine(stage, layer);
@@ -33,11 +33,11 @@ window.addEventListener("DOMContentLoaded", () => {
     
     // Toolbar: Add Source
     document.getElementById("add-source").onclick = async () => {
-        const folders = await window.api.pickFolder();
+        const folders = await fileapi.pickFolder();
         if (!folders?.length) return;
         
         const folderPath = folders[0];
-        const items = await window.api.readFolder(folderPath);
+        const items = await fileapi.readFolder(folderPath);
         const folderName = folderPath.split(/[/\\]/).pop() || "Source";
         
         const col = AppState.groupCounter % 3;
@@ -60,11 +60,11 @@ window.addEventListener("DOMContentLoaded", () => {
     
     // Toolbar: Add Destination
     document.getElementById("add-dest").onclick = async () => {
-        const folders = await window.api.pickFolder();
+        const folders = await fileapi.pickFolder();
         if (!folders?.length) return;
         
         const folderPath = folders[0];
-        const items = await window.api.readFolder(folderPath);
+        const items = await fileapi.readFolder(folderPath);
         const folderName = folderPath.split(/[/\\]/).pop() || "Destination";
         
         const col = AppState.groupCounter % 3;

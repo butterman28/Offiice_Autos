@@ -51,7 +51,7 @@ Built for developers, researchers, media producers, and anyone who manages large
 | Layer | Technology |
 |-------|------------|
 | **Frontend** | HTML5 Canvas, Konva.js, Vanilla JS |
-| **Backend** |Tauri|
+| **Backend** | Electron (Chromium + Node.js) |
 | **Inter-process** | `ipcMain` / `ipcRenderer` with `contextBridge` |
 | **Styling** | Minimal CSS, MUI-inspired toolbar |
 | **Build** | Electron Forge / Vite (configurable) |
@@ -63,8 +63,9 @@ Built for developers, researchers, media producers, and anyone who manages large
 ## 📦 Installation
 
 ### Prerequisites
+- Node.js ≥ 18.x
 - npm or yarn
-- rust
+
 ### Local Setup
 ```bash
 git clone https://github.com/your-username/folderflow.git

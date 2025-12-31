@@ -20,7 +20,7 @@ const ItemRenderer = {
         });
 
         bg.on("click", async () => {
-            const newItems = await window.api.readFolder(parentPath);
+            const newItems = await fileapi.readFolder(parentPath);
             const parentName = parentPath.split(/[/\\]/).pop() || "Root";
             const folderGroupManager = new FolderGroup(layer);
             await folderGroupManager.refresh(group, newItems, parentPath, `📁 ${parentName}`);
@@ -93,7 +93,7 @@ const ItemRenderer = {
             if (!confirm(`Delete ${type} "${item.name}"? This cannot be undone.`)) return;
 
             try {
-                const result = await window.api.deleteItem(item.path);
+                const result = await fileapi.deleteItem(item.path);
                 console.log("123")
                 //FolderGroup.refreshAllGroups(this.layer);
                 if (result.success) {
@@ -186,7 +186,7 @@ const ItemRenderer = {
                     if (toggleArrow) toggleArrow.text("▶");
                     item._isExpanded = false;
                 } else {
-                    const newItems = await window.api.readFolder(item.path);
+                    const newItems = await fileapi.readFolder(item.path);
                     if (newItems.length === 0) {
                         MUIToolbar?.showSnackbar("Folder is empty", "info");
                         return;
@@ -280,7 +280,7 @@ const ItemRenderer = {
             if (!confirm(`Delete ${type} "${item.name}"? This cannot be undone.`)) return;
 
             try {
-                const result = await window.api.deleteItem(item.path);
+                const result = await fileapi.deleteItem(item.path);
                  FolderGroup.refreshAllGroups(layer);
                 if (result.success) {
                     container.destroy();
@@ -371,7 +371,7 @@ const ItemRenderer = {
                     container._isExpanded = false;
                 } else {
                     try {
-                        const subItems = await window.api.readFolder(item.path);
+                        const subItems = await fileapi.readFolder(item.path);
                         if (subItems.length === 0) {
                             MUIToolbar?.showSnackbar("Empty folder", "info");
                             return;
@@ -434,14 +434,14 @@ const ItemRenderer = {
         if (!folderName?.trim()) return;
 
         try {
-            const result = await window.api.createFolder(targetPath, folderName.trim());
+            const result = await fileapi.createFolder(targetPath, folderName.trim());
             if (result.success) {
                 let pg = listGroup;
                 while (pg && !pg.getParent()?.findOne) pg = pg.getParent();
                 const main = pg?.getParent();
                 const gd = AppState.findGroup(main);
                 if (gd) {
-                    const newItems = await window.api.readFolder(targetPath);
+                    const newItems = await fileapi.readFolder(targetPath);
                     const folderGroupManager = new FolderGroup(layer);
                     await folderGroupManager.refresh(main, newItems, targetPath, `📁 ${targetPath.split(/[/\\]/).pop()}`);
                 }
