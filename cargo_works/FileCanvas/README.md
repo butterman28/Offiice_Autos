@@ -51,13 +51,9 @@ Built for developers, researchers, media producers, and anyone who manages large
 | Layer | Technology |
 |-------|------------|
 | **Frontend** | HTML5,tailwindCSS,Vanilla JS |
-| **Backend** |Tauri|idge` |
-| **Styling** | Minimal CSS, MUI-inspired toolbar |
-| **Build** | Electron Forge / Vite (configurable) |
+| **Backend** |Tauri(rust)|
+| **Styling** | CSS|
 
-> ✅ **No frameworks required** — lightweight, fast, and debuggable.
-
----
 
 ## 📦 Installation
 
@@ -66,7 +62,7 @@ Built for developers, researchers, media producers, and anyone who manages large
 - rust
 ### Local Setup
 ```bash
-git clone https://github.com/your-username/folderflow.git
-cd 
+git clone git@github.com:butterman28/Offiice_Autos.git
+cd /cargo_works/FileCanvas
 npm install
-npm start
+npm run dev

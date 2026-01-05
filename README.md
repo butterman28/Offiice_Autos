@@ -2,7 +2,7 @@
 
 # **Automated Office Workflows:**
 
-OfficeAutos is a suite of tools designed to streamline and automate common administrative and data-handling tasks within an office environment. The project aims to improve efficiency by providing desktop applications built with JavaScript,HTML/CSS[including css libraries] and python for the programming while using Tauri so like a binding cause we are aiming for cross-platform , we are focusing on familiar tech, tech with a strong eco-system so beginners won't get lost.
+OfficeAutos is a suite of tools designed to streamline and automate common administrative and data-handling tasks within an office environment. The project aims to improve efficiency by providing desktop applications built with JavaScript,HTML/CSS[including css libraries] and python for the programming while using Tauri so like a binding cause we are aiming for cross-platform , we are focusing on familiar tech, tech with a strong eco-system so beginners won't get lost and walking with llms will be easier too. we dont want to be like swift here no pun intended 
 
 The core functionality includes file manipulation, data processing, and workflow orchestration, driven by the modular filemovers  and DocX generator template sub-projects.
 
