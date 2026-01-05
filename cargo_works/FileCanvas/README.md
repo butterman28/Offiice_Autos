@@ -50,9 +50,8 @@ Built for developers, researchers, media producers, and anyone who manages large
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | HTML5 Canvas, Konva.js, Vanilla JS |
-| **Backend** |Tauri|
-| **Inter-process** | `ipcMain` / `ipcRenderer` with `contextBridge` |
+| **Frontend** | HTML5,tailwindCSS,Vanilla JS |
+| **Backend** |Tauri|idge` |
 | **Styling** | Minimal CSS, MUI-inspired toolbar |
 | **Build** | Electron Forge / Vite (configurable) |
 
@@ -68,6 +67,6 @@ Built for developers, researchers, media producers, and anyone who manages large
 ### Local Setup
 ```bash
 git clone https://github.com/your-username/folderflow.git
-cd folderflow
+cd 
 npm install
 npm start

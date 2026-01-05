@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "tauri": "tauri dev",
+    "tauri": "tauri build",
+    "tauri:build": "tauri build",
+    "build": "tauri build",
     "tailwind": "tailwindcss -i ./src/input.css -o ./src/output.css --watch",
     "dev": "npm-run-all --parallel tailwind tauri"
   },

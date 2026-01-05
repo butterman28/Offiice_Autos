@@ -10,6 +10,7 @@ import { markTransferred } from './assets/components/transferHistory.js';
 import { activeArrow } from './assets/components/connections.js';
 import { toggleShowAllConnections } from './assets/components/connections.js';
 import { toggleBlueprintMode } from './assets/components/blueprint.js';
+import { openFeedbackModal} from './assets/components/feedback.js';
 
 // Initialize global state
 initConnectionsLayer();
@@ -216,3 +217,12 @@ window.getPanelStates = () => {
     };
   });
 };
+
+document
+  .getElementById("reportBugBtn")
+  .addEventListener("click", () => openFeedbackModal("bug"));
+
+document
+  .getElementById("suggestBtn")
+  .addEventListener("click", () => openFeedbackModal("suggestion"));
+

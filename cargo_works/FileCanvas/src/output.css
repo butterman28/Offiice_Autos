@@ -22,6 +22,7 @@
     --color-cyan-600: oklch(60.9% 0.126 221.723);
     --color-cyan-700: oklch(52% 0.105 223.128);
     --color-blue-50: oklch(97% 0.014 254.604);
+    --color-blue-100: oklch(93.2% 0.032 255.585);
     --color-blue-200: oklch(88.2% 0.059 254.128);
     --color-blue-300: oklch(80.9% 0.105 251.813);
     --color-blue-400: oklch(70.7% 0.165 254.624);
@@ -302,6 +303,9 @@
   .z-20 {
     z-index: 20;
   }
+  .z-50 {
+    z-index: 50;
+  }
   .z-\[9998\] {
     z-index: 9998;
   }
@@ -422,6 +426,9 @@
   .hidden {
     display: none;
   }
+  .inline {
+    display: inline;
+  }
   .table {
     display: table;
   }
@@ -451,12 +458,6 @@
   }
   .max-h-\[50vh\] {
     max-height: 50vh;
-  }
-  .max-h-\[70vh\] {
-    max-height: 70vh;
-  }
-  .max-h-\[75vh\] {
-    max-height: 75vh;
   }
   .max-h-\[85vh\] {
     max-height: 85vh;
@@ -496,9 +497,6 @@
   }
   .w-\[420px\] {
     width: 420px;
-  }
-  .w-\[480px\] {
-    width: 480px;
   }
   .w-full {
     width: 100%;
@@ -751,6 +749,9 @@
   .bg-blue-50 {
     background-color: var(--color-blue-50);
   }
+  .bg-blue-100 {
+    background-color: var(--color-blue-100);
+  }
   .bg-blue-400 {
     background-color: var(--color-blue-400);
   }
@@ -949,14 +950,14 @@
   .py-4 {
     padding-block: calc(var(--spacing) * 4);
   }
-  .py-6 {
-    padding-block: calc(var(--spacing) * 6);
-  }
   .py-8 {
     padding-block: calc(var(--spacing) * 8);
   }
   .pt-2 {
     padding-top: calc(var(--spacing) * 2);
+  }
+  .pt-4 {
+    padding-top: calc(var(--spacing) * 4);
   }
   .pr-8 {
     padding-right: calc(var(--spacing) * 8);
@@ -1011,6 +1012,9 @@
   }
   .text-blue-600 {
     color: var(--color-blue-600);
+  }
+  .text-blue-700 {
+    color: var(--color-blue-700);
   }
   .text-blue-800 {
     color: var(--color-blue-800);
@@ -1213,20 +1217,6 @@
       }
     }
   }
-  .group-hover\:text-indigo-500 {
-    &:is(:where(.group):hover *) {
-      @media (hover: hover) {
-        color: var(--color-indigo-500);
-      }
-    }
-  }
-  .group-hover\:text-indigo-600 {
-    &:is(:where(.group):hover *) {
-      @media (hover: hover) {
-        color: var(--color-indigo-600);
-      }
-    }
-  }
   .hover\:scale-110 {
     &:hover {
       @media (hover: hover) {
@@ -1387,13 +1377,6 @@
       }
     }
   }
-  .hover\:text-black {
-    &:hover {
-      @media (hover: hover) {
-        color: var(--color-black);
-      }
-    }
-  }
   .hover\:text-gray-200 {
     &:hover {
       @media (hover: hover) {
@@ -1446,10 +1429,21 @@
       border-color: transparent;
     }
   }
+  .focus\:ring {
+    &:focus {
+      --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
   .focus\:ring-2 {
     &:focus {
       --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
       box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+  .focus\:ring-indigo-200 {
+    &:focus {
+      --tw-ring-color: var(--color-indigo-200);
     }
   }
   .focus\:ring-indigo-500 {
