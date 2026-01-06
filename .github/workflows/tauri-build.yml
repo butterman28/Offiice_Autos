@@ -3,7 +3,7 @@ name: Build FileCanvas (Tauri)
 on:
   push:
     tags:
-      - "v*.*.*"   # Build only on version tags
+      - "v*.*.*"
   workflow_dispatch:
 
 jobs:
@@ -11,24 +11,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - ubuntu-latest
-          - windows-latest
-          - macos-latest
+        settings:
+          - platform: ubuntu-latest
+            args: ''
+          - platform: macos-latest
+            args: '--target universal-apple-darwin'
+          - platform: windows-latest
+            args: ''
 
-    runs-on: ${{ matrix.platform }}
-
-    defaults:
-      run:
-        working-directory: cargo_works/FileCanvas
+    runs-on: ${{ matrix.settings.platform }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # -------------------------
-      # Node / Frontend
-      # -------------------------
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -36,19 +32,16 @@ jobs:
           cache: npm
           cache-dependency-path: cargo_works/FileCanvas/package-lock.json
 
-      - name: Install frontend dependencies
-        run: npm ci
-
-      # -------------------------
-      # Rust / Tauri
-      # -------------------------
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
         with:
-          components: rustfmt, clippy
+          workspaces: cargo_works/FileCanvas/src-tauri
 
       - name: Install Linux dependencies
-        if: matrix.platform == 'ubuntu-latest'
+        if: matrix.settings.platform == 'ubuntu-latest'
         run: |
           sudo apt update
           sudo apt install -y \
@@ -58,18 +51,14 @@ jobs:
             librsvg2-dev \
             patchelf
 
-      # -------------------------
-      # Build
-      # -------------------------
-      - name: Build Tauri app
-        run: npm run tauri build
+      - name: Install frontend dependencies
+        working-directory: cargo_works/FileCanvas
+        run: npm ci
 
-      # -------------------------
-      # Artifacts
-      # -------------------------
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: filecanvas-${{ matrix.platform }}
-          path: |
-            cargo_works/FileCanvas/src-tauri/target/release/bundle/**/*
+          projectPath: cargo_works/FileCanvas
+          args: ${{ matrix.settings.args }}
