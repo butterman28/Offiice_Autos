@@ -5,8 +5,8 @@
   "identifier": "com.butterman.filecanvas",
   "build": {
     "frontendDist": "../src",
-    "beforeDevCommand": "npm run tailwind",
-    "beforeBuildCommand": "npm run build"
+    "beforeDevCommand": "npm run tailwind:watch",
+    "beforeBuildCommand": "npm run tailwind:build"
   },
   "app": {
     "withGlobalTauri": true,

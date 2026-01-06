@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "tauri": "tauri",
-    "dev": "npm-run-all --parallel tailwind \"tauri dev\"",
-    "build": "tauri build",
-    "tauri:build": "tauri build",
-    "tailwind": "tailwindcss -i ./src/input.css -o ./src/output.css --watch"
+    "dev": "npm-run-all --parallel tailwind:watch \"tauri dev\"",
+    "tailwind:watch": "tailwindcss -i ./src/input.css -o ./src/output.css --watch",
+    "tailwind:build": "tailwindcss -i ./src/input.css -o ./src/output.css",
+    "build": "npm run tailwind:build",
+    "tauri:build": "tauri build"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.1.0"
