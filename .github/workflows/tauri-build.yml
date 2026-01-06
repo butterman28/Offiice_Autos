@@ -8,16 +8,21 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
         settings:
           - platform: ubuntu-latest
             args: ''
+            suffix: 'linux'
           - platform: macos-latest
             args: '--target universal-apple-darwin'
+            suffix: 'macos'
           - platform: windows-latest
             args: ''
+            suffix: 'windows'
 
     runs-on: ${{ matrix.settings.platform }}
 
@@ -34,11 +39,8 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
         with:
-          workspaces: cargo_works/FileCanvas/src-tauri
+          targets: ${{ matrix.settings.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: Install Linux dependencies
         if: matrix.settings.platform == 'ubuntu-latest'
@@ -49,16 +51,35 @@ jobs:
             libgtk-3-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
-            patchelf
+            patchelf \
+            xvfb
 
       - name: Install frontend dependencies
         working-directory: cargo_works/FileCanvas
         run: npm ci
 
-      - name: Build Tauri app
+      - name: Build and Release
+        id: tauri_build
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GDK_BACKEND: x11
         with:
           projectPath: cargo_works/FileCanvas
+          tagName: ${{ github.ref_name }}
+          releaseName: "FileCanvas v${{ github.ref_name }}"
           args: ${{ matrix.settings.args }}
+          includeRelease: true
+
+      # This step uploads the files to the "Actions" page summary
+      - name: Upload Artifacts to Actions Page
+        uses: actions/upload-artifact@v4
+        with:
+          name: FileCanvas-Executables-${{ matrix.settings.suffix }}
+          path: |
+            cargo_works/FileCanvas/src-tauri/target/release/bundle/msi/*.msi
+            cargo_works/FileCanvas/src-tauri/target/release/bundle/setup.exe
+            cargo_works/FileCanvas/src-tauri/target/release/bundle/dmg/*.dmg
+            cargo_works/FileCanvas/src-tauri/target/release/bundle/appimage/*.AppImage
+            cargo_works/FileCanvas/src-tauri/target/release/bundle/deb/*.deb
+          if-no-files-found: warn
