@@ -379,9 +379,15 @@ async fn get_file_info(path: String) -> Result<FileProperties, String> {
 
 
 fn main() {
+    // Prevent GTK/Tauri initialization in headless CI
+    if std::env::var("CI").is_ok() {
+        println!("CI environment detected — skipping Tauri runtime startup");
+        return;
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_shell::init()) // Initialize shell plugin
+        .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             rename_item,
             get_file_info,
