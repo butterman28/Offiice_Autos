@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "identifier": "com.butterman.filecanvas",
   "build": {
-    "frontendDist": "../src"
+    "frontendDist": "../src",
+    "beforeDevCommand": "npm run tailwind",
+    "beforeBuildCommand": "npm run build"
   },
   "app": {
     "withGlobalTauri": true,
@@ -17,7 +19,6 @@
     ],
     "security": {
       "csp": null
-      
     }
   },
   "bundle": {
