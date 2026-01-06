@@ -16,7 +16,28 @@ export function toggleShowAllConnections() {
   redrawAllConnections();
   return showAllConnectionsMode;
 }
+// --- Connection Tooltip Manager ---
+let connectionTooltip;
 
+function ensureConnectionTooltip() {
+  if (connectionTooltip) return;
+
+  connectionTooltip = document.createElement('div');
+  connectionTooltip.className =
+    'fixed z-[30001] bg-white border border-gray-300 rounded shadow-lg px-3 py-2 text-xs text-gray-800 pointer-events-none hidden';
+  document.body.appendChild(connectionTooltip);
+}
+
+function showConnectionTooltip(html, x, y) {
+  connectionTooltip.innerHTML = html;
+  connectionTooltip.style.left = `${x + 12}px`;
+  connectionTooltip.style.top = `${y + 12}px`;
+  connectionTooltip.classList.remove('hidden');
+}
+
+function hideConnectionTooltip() {
+  connectionTooltip?.classList.add('hidden');
+}
 // Add this helper function to connections.js
 function expandFoldersForConnections() {
   connections.forEach(conn => {
@@ -70,6 +91,7 @@ export function getRedrawFn() {
 
 // --- Initialization ---
 export function initConnectionsLayer() {
+  ensureConnectionTooltip();
   if (svg) return; // Prevent duplicate init
 
   svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -234,29 +256,68 @@ function createOrUpdateSummaryLine(fromDot, toDot) {
   if (!panelFrom || !panelTo || panelFrom === panelTo) return;
 
   const key = getSummaryKey(panelFrom, panelTo);
+  
+  // Check if summary line already exists
   if (!summaryLines.has(key)) {
+    // Create new summary line
     const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
     line.setAttribute("stroke", "#4f46e5");
     line.setAttribute("stroke-width", "2");
     line.setAttribute("stroke-dasharray", "6,4");
     line.setAttribute("opacity", "0.6");
+    
     const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
     label.setAttribute("fill", "#4f46e5");
     label.setAttribute("font-size", "12");
     label.setAttribute("text-anchor", "middle");
     label.setAttribute("dominant-baseline", "middle");
+    
     group.append(line, label);
     svg.appendChild(group);
-    summaryLines.set(key, { fromPanel: panelFrom, toPanel: panelTo, line, label, count: 0, group });
+    
+    // Create the summary object
+    const summary = { 
+      fromPanel: panelFrom, 
+      toPanel: panelTo, 
+      line, 
+      label, 
+      count: 0, 
+      group 
+    };
+    
+    // Add tooltip handlers
+    line.style.pointerEvents = "stroke"; 
+    
+    const onMouseEnterSummary = (e) => {
+      const html = `
+        <div class="font-semibold text-indigo-600 mb-1">Panel Connections</div>
+        <div>${summary.fromPanel} ↔ ${summary.toPanel}</div>
+        <div class="text-gray-600 text-xs mt-1">${summary.count} connection(s)</div>
+      `;
+      showConnectionTooltip(html, e.clientX, e.clientY);
+    };
+    
+    const onMouseLeaveSummary = hideConnectionTooltip;
+
+    line.addEventListener('mouseenter', onMouseEnterSummary);
+    line.addEventListener('mouseleave', onMouseLeaveSummary);
+
+    // Store handlers for cleanup
+    summary._tooltipHandlers = { onMouseEnterSummary, onMouseLeaveSummary };
+    
+    // Store in map
+    summaryLines.set(key, summary);
   }
 
+  // Now get the summary and increment count
   const summary = summaryLines.get(key);
   summary.count++;
   if (summary.count > 0) {
     summary.label.textContent = `${summary.count}`;
   }
 }
+
 
 function removeSummaryLine(fromDot, toDot) {
   const panelFrom = getPanelIdFromDot(fromDot);
@@ -383,8 +444,17 @@ function handleMouseMove(e) {
 async function handleMouseUp(e) {
   if (!activeArrow) return;
 
-  const targetDot = e.target.closest("div[data-folder-path]");
+  // Try to find the dot element - check if the target itself has the attribute first
+  let targetDot = e.target.hasAttribute('data-folder-path') ? e.target : e.target.closest("[data-folder-path]");
+  
   if (!targetDot) {
+    activeArrow.path.remove();
+    activeArrow = null;
+    return;
+  }
+  
+  // Make sure we didn't release on the same dot we started from
+  if (targetDot === activeArrow.fromEl) {
     activeArrow.path.remove();
     activeArrow = null;
     return;
@@ -412,18 +482,31 @@ async function handleMouseUp(e) {
 
   // Create cancel button
   const cancelBtn = createCancelButton(() => {
-      const index = connections.indexOf(connection);
-      if (index !== -1) {
-        // Clean up labels
-        removeConnectionLabel(connection.fromEl, connection.id);
-        removeConnectionLabel(connection.toEl, connection.id);
-
-        removeSummaryLine(connection.fromEl, connection.toEl);
-        connection.pathEl.remove();
-        connection.cancelBtn.remove();
-        connections.splice(index, 1);
+    const index = connections.indexOf(connection);
+    if (index !== -1) {
+      // Clean up tooltip listeners
+      const h = connection._tooltipHandlers;
+      if (h) {
+        connection.pathEl.removeEventListener('mouseenter', h.onMouseEnter);
+        connection.pathEl.removeEventListener('mousemove', h.onMouseMove);
+        connection.pathEl.removeEventListener('mouseleave', h.onMouseLeave);
       }
-    });
+
+      // Clean up labels
+      removeConnectionLabel(connection.fromEl, connection.id);
+      removeConnectionLabel(connection.toEl, connection.id);
+
+      // Clean up summary line
+      removeSummaryLine(connection.fromEl, connection.toEl);
+
+      // Remove elements
+      connection.pathEl.remove();
+      connection.cancelBtn.remove();
+
+      // Remove from list
+      connections.splice(index, 1);
+    }
+  });
 
   svg.appendChild(cancelBtn);
 
@@ -438,16 +521,45 @@ async function handleMouseUp(e) {
     cancelBtn
   };
 
-// Attach labels to both dots
-attachConnectionLabel(connection.fromEl, connectionId);
-attachConnectionLabel(connection.toEl, connectionId);
+  // Attach labels to both dots
+  attachConnectionLabel(connection.fromEl, connectionId);
+  attachConnectionLabel(connection.toEl, connectionId);
+
+  // Attach hover behavior
+  connection.pathEl.style.pointerEvents = 'stroke';
+
+  const onMouseEnter = (e) => {
+    const fromPanel = getPanelIdFromDot(connection.fromEl);
+    const toPanel = getPanelIdFromDot(connection.toEl);
+    const html = `
+      <div class="font-semibold text-indigo-600 mb-1">Connection #${connection.id}</div>
+      <div><span class="font-medium">From:</span> ${connection.fromPath}</div>
+      <div><span class="font-medium">To:</span> ${connection.toPath}</div>
+      <div class="text-gray-500 text-xs mt-1">${fromPanel} → ${toPanel}</div>
+    `;
+    showConnectionTooltip(html, e.clientX, e.clientY);
+  };
+
+  const onMouseMove = (e) => {
+    showConnectionTooltip(connectionTooltip.innerHTML, e.clientX, e.clientY);
+  };
+
+  const onMouseLeave = () => {
+    hideConnectionTooltip();
+  };
+
+  connection.pathEl.addEventListener('mouseenter', onMouseEnter);
+  connection.pathEl.addEventListener('mousemove', onMouseMove);
+  connection.pathEl.addEventListener('mouseleave', onMouseLeave);
+
+  // Store for cleanup
+  connection._tooltipHandlers = { onMouseEnter, onMouseMove, onMouseLeave };
 
   connections.push(connection);
   createOrUpdateSummaryLine(connection.fromEl, connection.toEl);
   redrawSingleConnection(connection);
   activeArrow = null;
 }
-
 function handleMouseOver(e) {
   if (!activeArrow) return;
   const folder = e.target.closest("[data-folder-path]");

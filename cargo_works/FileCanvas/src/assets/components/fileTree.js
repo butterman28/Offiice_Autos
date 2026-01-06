@@ -6,6 +6,7 @@ import { startArrowFrom } from './connections.js';
 import { isTransferred } from './transferHistory.js';
 import { showOpenWithModal } from './openWithModal.js';
 import { showRenameModal } from './uiUtils.js';
+import { showItemContextMenu } from './showItemContextMenu.js';
 const folderCache = new Map();
 import { showPropertiesModal } from './uiUtils.js';
 const panelSortOrder = new Map();
@@ -15,119 +16,6 @@ let redrawAllConnections = () => {};
 
 export function setRedrawFn(fn) {
   redrawAllConnections = fn;
-}
-////// when you right click on a file 
-function showFileContextMenu(e, filePath, fileName) {
-  e.preventDefault();
-
-  const existing = document.getElementById('file-context-menu');
-  if (existing) existing.remove();
-
-  const menu = document.createElement('div');
-  menu.id = 'file-context-menu';
-  menu.className = 'absolute z-[30000] bg-white border border-gray-200 rounded shadow-lg py-1 text-sm min-w-[160px] text-gray-800';
-  menu.style.left = `${e.clientX + window.scrollX}px`;
-  menu.style.top = `${e.clientY + window.scrollY}px`;
-
-  menu.innerHTML = `
-    <button class="w-full text-left px-4 py-2 hover:bg-indigo-50 flex items-center gap-2">
-      <i class="fas fa-file-medical text-indigo-500"></i>
-      Open
-    </button>
-    <button class="w-full text-left px-4 py-2 hover:bg-indigo-50 flex items-center gap-2">
-      <i class="fas fa-external-link-alt text-indigo-500"></i>
-      Open With...
-    </button>
-    <hr class="my-1 border-gray-200">
-    <button class="w-full text-left px-4 py-2 hover:bg-indigo-50 flex items-center gap-2">
-      <i class="fas fa-edit text-indigo-500"></i>
-      Rename
-    </button>
-    <button class="w-full text-left px-4 py-2 hover:bg-indigo-50 flex items-center gap-2">
-      <i class="fas fa-info-circle text-indigo-500"></i>
-      Properties
-    </button>
-  `;
-
-  const [openBtn, openWithBtn, renameBtn, propertiesBtn] = menu.querySelectorAll('button');
-
-  // --- Open ---
-  openBtn.addEventListener('click', async () => {
-    try {
-      await fileapi.openFile(filePath);
-    } catch (err) {
-      showSnackbar(`Failed to open "${fileName}"`, "error");
-    } finally {
-      menu.remove();
-    }
-  });
-
-  // --- Open With ---
-  openWithBtn.addEventListener('click', () => {
-    menu.remove();
-    showOpenWithModal(filePath, fileName);
-  });
-
-  // --- Rename ---
-renameBtn.addEventListener('click', () => {
-  menu.remove();
-  showRenameModal(fileName, async (newName) => {
-    try {
-      const newPath = await fileapi.renameItem(filePath, newName);
-      showSnackbar(`Renamed to "${newName}"`, "success");
-      // Optional: notify file list
-      window.dispatchEvent(new CustomEvent('file-renamed', {
-        detail: { oldPath: filePath, newPath }
-      }));
-    } catch (err) {
-      console.error('Rename failed:', err);
-      showSnackbar(`Rename failed: ${err}`, "error");
-    }
-  });
-});
-
-// --- Properties ---
-propertiesBtn.addEventListener('click', async () => {
-  menu.remove();
-  try {
-    const info = await fileapi.getFileInfo(filePath);
-
-    const formatBytes = (bytes) => {
-      if (bytes === 0) return '0 Bytes';
-      const k = 1024;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    };
-
-    const size = info.is_directory ? '—' : (info.size ? formatBytes(info.size) : 'Unknown');
-    const mtime = new Date(info.mtime).toLocaleString();
-    const ctime = new Date(info.ctime).toLocaleString();
-
-    let content = `
-      <div class="text-sm text-gray-700 space-y-1">
-        <div><span class="font-medium">Name:</span> ${info.name}</div>
-        <div><span class="font-medium">Path:</span> ${info.path}</div>
-        <div><span class="font-medium">Type:</span> ${info.is_directory ? 'Folder' : 'File'}</div>
-        ${!info.is_directory ? `<div><span class="font-medium">Size:</span> ${size}</div>` : ''}
-        <div><span class="font-medium">Created:</span> ${ctime}</div>
-        <div><span class="font-medium">Modified:</span> ${mtime}</div>
-      </div>
-    `;
-
-    showPropertiesModal(content, fileName);
-  } catch (err) {
-    console.error('Properties failed:', err);
-    showSnackbar(`Could not load properties: ${err}`, "error");
-  }
-});
-
-  // Close on outside click
-  setTimeout(() => {
-    document.addEventListener('click', () => menu.remove(), { once: true });
-  });
-
-  document.body.appendChild(menu);
 }
 
 /////
@@ -345,7 +233,11 @@ export function renderTree(items) {
           });
     
           addBtnContainer.append(addBtn, dropdown);
-    
+          label.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            showItemContextMenu(e, item);
+          });
           //Delete Button
           const delBtn = document.createElement("button");
           delBtn.className = "text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-700 hover:bg-red-200 transition";
@@ -412,8 +304,9 @@ export function renderTree(items) {
         label.addEventListener("contextmenu", (e) => {
           e.preventDefault();
           e.stopPropagation();
-          showFileContextMenu(e, item.path, item.name);
+          showItemContextMenu(e, item);
         });
+
           
           const delBtn = document.createElement("button");
           delBtn.className = "ml-auto text-xs px-1.5 py-0.5 rounded bg-red-100 text-red-700 hover:bg-red-200 transition";
@@ -462,4 +355,9 @@ window.addEventListener('file-renamed', async (e) => {
     folderCache.delete(parentDir);
     await refreshPanelByRootPath(parentDir, fileapi);
   }
+});
+window.addEventListener('open-folder', (e) => {
+  const { path } = e.detail;
+  const label = document.querySelector(`[data-folder-path="${path}"]`);
+  label?.click();
 });

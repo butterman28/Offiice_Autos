@@ -2,6 +2,8 @@ mod openwith;
 use openwith::{list_open_with_apps, open_with_app};
 use std::fs;
 use std::path::PathBuf;
+use std::path::Path;
+
 
 use serde::{Deserialize, Serialize};
 use tauri::async_runtime::spawn_blocking;
@@ -14,15 +16,27 @@ use tauri::Manager;
 
 // --- Data Structures ---
 
-#[derive(Debug, Serialize, Deserialize)] // Added Deserialize as it's good practice
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FileItem {
     pub name: String,
     pub path: String,
     pub is_directory: bool,
     pub children: Option<Vec<FileItem>>,
-    pub mtime: u64, 
-    pub ctime: u64, 
+    pub mtime: u64,
+    pub ctime: u64,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FileProperties {
+    pub name: String,
+    pub path: String,
+    pub is_directory: bool,
+    pub size: u64,      // recursive if directory
+    pub mtime: u64,
+    pub ctime: u64,
+    pub children: Option<Vec<FileItem>>,
+}
+
 
 // --- Helpers ---
 
@@ -301,34 +315,67 @@ async fn rename_item(old_path: String, new_name: String) -> Result<String, Strin
     Ok(new_path.to_string_lossy().to_string())
 }
 
+fn dir_size(path: &Path) -> u64 {
+    let mut size = 0;
+
+    if let Ok(entries) = fs::read_dir(path) {
+        for entry in entries.flatten() {
+            if let Ok(metadata) = entry.metadata() {
+                if metadata.is_dir() {
+                    size += dir_size(&entry.path());
+                } else {
+                    size += metadata.len();
+                }
+            }
+        }
+    }
+
+    size
+}
+
+
 #[tauri::command]
-async fn get_file_info(path: String) -> Result<FileItem, String> {
+async fn get_file_info(path: String) -> Result<FileProperties, String> {
     let path = PathBuf::from(&path);
     let metadata = fs::metadata(&path).map_err(|e| e.to_string())?;
-    let name = path.file_name()
+
+    let name = path
+        .file_name()
         .ok_or("Invalid file path")?
         .to_string_lossy()
         .to_string();
 
     let mtime = metadata
         .modified()
-        .map(|t| t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_millis() as u64)
+        .map(|t| t.duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as u64)
         .unwrap_or(0);
 
     let ctime = metadata
         .created()
-        .map(|t| t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_millis() as u64)
+        .map(|t| t.duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as u64)
         .unwrap_or(mtime);
 
-    Ok(FileItem {
+    let size = if metadata.is_dir() {
+        dir_size(&path)
+    } else {
+        metadata.len()
+    };
+
+    Ok(FileProperties{
         name,
         path: path.to_string_lossy().to_string(),
         is_directory: metadata.is_dir(),
+        size,
         children: None,
         mtime,
         ctime,
     })
 }
+
 
 
 fn main() {
