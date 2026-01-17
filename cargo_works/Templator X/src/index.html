@@ -98,15 +98,15 @@
       </div>
     </div>
 
-    <!-- Preview + Generate Side-by-Side -->
+   <!-- Preview + Generate Side-by-Side -->
 <div class="w-full max-w-6xl mx-auto">
   <div class="flex flex-col md:flex-row gap-6 md:gap-8 items-stretch">
     
     <!-- Preview Card (left) -->
     <div id="previewCard" class="hidden w-full md:w-1/2 flex flex-col">
       <div class="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col h-full">
-        <!-- Scrollable container for both sections -->
-        <div class="overflow-y-auto p-4 flex-1 space-y-6">
+        <!-- Remove the outer scroll container -->
+        <div class="p-4 space-y-6 overflow-y-auto flex-1">
           
           <!-- ✅ TEMPLATE SECTION -->
           <div>
@@ -130,7 +130,8 @@
               </div>
             </div>
             <p id="templatePath" class="text-sm text-gray-600 break-all mb-3 max-w-full"></p>
-            <div id="previewText" class="prose prose-sm max-w-none text-gray-700 bg-gray-50 p-3 rounded border"></div>
+            <!-- ✅ Individual scrollbar for template preview -->
+            <div id="previewText" class="max-h-64 overflow-y-auto prose prose-sm max-w-none text-gray-700 bg-gray-50 p-3 rounded border"></div>
           </div>
 
           <!-- ✅ DATA SECTION -->
@@ -155,11 +156,40 @@
               </div>
             </div>
             <p id="dataPathLabel" class="text-sm text-gray-600 break-all mb-3 max-w-full"></p>
-            <div id="dataPreview" class="overflow-x-auto text-xs bg-gray-50 p-3 rounded border">
+            <!-- ✅ Individual scrollbar for data preview -->
+            <div id="dataPreview" class="max-h-64 overflow-y-auto overflow-x-auto text-xs bg-gray-50 p-3 rounded border">
               <!-- XLSX table will appear here -->
             </div>
           </div>
 
+          <!-- ✅ OUTPUT FOLDER SECTION -->
+          <div>
+            <div class="flex justify-between items-start mb-2">
+              <h2 class="font-semibold text-gray-800">📁 Output Folder</h2>
+              <div class="flex gap-2 flex-wrap">
+                <button
+                  id="addToQuickOutput"
+                  class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-2 py-1 rounded-lg whitespace-nowrap transition-colors hidden"
+                  title="Save this output folder for quick access"
+                >
+                  ➕ Add Output
+                </button>
+                <button
+                  id="clearOutput"
+                  class="text-xs text-red-600 hover:text-red-800 font-medium focus:outline-none whitespace-nowrap"
+                  title="Clear output folder"
+                >
+                  ✕ Clear
+                </button>
+              </div>
+            </div>
+            <p id="outputPathLabel" class="text-sm text-gray-600 break-all mb-3 max-w-full"></p>
+            
+            <!-- ✅ Output folder contents preview -->
+            <div id="outputFolderPreview" class="max-h-48 overflow-y-auto text-xs bg-gray-50 p-3 rounded border">
+              <div id="outputFolderContents" class="space-y-1"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -176,41 +206,25 @@
       </button>
       <p id="status" class="mt-4 text-sm min-h-[24px] text-gray-600"></p>
 
-      <!-- Data & Output Paths -->
       <!-- Quick Access Panel -->
-    <div class="mt-6 space-y-5 text-left">
-
-      <!-- Quick Templates -->
-      <div id="quickTemplatesPanel" class="hidden">
-        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Quick Templates</p>
-        <div id="quickTemplatesListRight" class="mt-2 space-y-1"></div>
-      </div>
-      <!-- Quick Templates -->
-       
-      <!-- Quick Data Files -->
-      <div id="quickDataPanel" class="hidden">
-        <div class="flex justify-between items-center">
-          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Quick Data</p>
-          <button id="manageData" class="text-xs text-emerald-600 hover:text-emerald-800">⚙️ Manage</button>
-        </div>
-        <div id="quickDataListRight" class="mt-2 flex flex-wrap gap-2"></div>
-      </div>
-
-      <!-- Fallback: Show paths if no quick items -->
-      <div id="pathFallback" class="space-y-4">
-        <div>
-          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Data File</p>
-          <p id="dataPath" class="text-sm text-gray-700 break-all bg-gray-50 p-2.5 rounded border text-center mt-1"></p>
-        </div>
-        <div>
-          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Output Folder</p>
-          <p id="outputPath" class="text-sm text-gray-700 break-all bg-gray-50 p-2.5 rounded border text-center mt-1"></p>
+      <div class="mt-6 space-y-5 text-left">
+        <!-- Quick Templates -->
+        <div id="quickTemplatesPanel" class="hidden">
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Quick Templates</p>
+          <div id="quickTemplatesListRight" class="mt-2 space-y-1"></div>
+        </div>       
+        <!-- Quick Data Files -->
+        <div id="quickDataPanel" class="hidden">
+          <div class="flex justify-between items-center">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Quick Data</p>
+            <button id="manageData" class="text-xs text-emerald-600 hover:text-emerald-800">⚙️ Manage</button>
+          </div>
+          <div id="quickDataListRight" class="mt-2 flex flex-wrap gap-2"></div>
         </div>
       </div>
-
-    </div>
     </div>
   </div>
+</div>
 </div>
   </body>
 </html>

@@ -120,6 +120,28 @@ fn read_file_bytes(path: String) -> Result<String, String> {
     Ok(base64)
 }
 
+#[tauri::command]
+async fn list_directory(path: String) -> Result<Vec<String>, String> {
+    use std::fs;
+    use std::path::Path;
+
+    let entries = fs::read_dir(&path)
+        .map_err(|e| format!("Failed to read directory '{}': {}", path, e))?;
+
+    let mut file_names = Vec::new();
+    for entry in entries {
+        if let Ok(entry) = entry {
+            if let Some(name) = entry.file_name().to_str() {
+                file_names.push(name.to_string());
+            }
+        }
+    }
+    
+    // Sort alphabetically
+    file_names.sort();
+    Ok(file_names)
+}
+
 // --- Main entry point ---
 
 fn main() {
@@ -129,6 +151,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             greet,
             generate_docs,
+            list_directory,
             read_file_bytes,
         ])
         .run(tauri::generate_context!())

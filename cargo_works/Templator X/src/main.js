@@ -1,396 +1,358 @@
+// ./main.js
+
 import { showModalPrompt, showConfirm } from "./assets/components/modal.js";
+import { csvToHtml,parseCsvLine,escapeHtml } from "./assets/components/csv2html.js";
+import { loadDocxPreview, renderQuickTemplates } from "./assets/components/docx_handler.js";
+import {
+  addQuickTemplate,
+  addQuickData,
+  addQuickOutput
+} from "./assets/states/quickstore.js";
 
 const { open } = window.__TAURI__.dialog;
 const { invoke } = window.__TAURI__.core;
-const { readBinaryFile } = window.__TAURI__.fs;
+//const {}
 
-const mammoth = window.mammoth;
-window.XLSX;
+// Global state (only what's needed globally)
+// In main.js, replace your state with:
+export let templatePath = null;
+export let dataPath = null;
+export let outputDir = null; // ← Start as null
 
-if (!mammoth) {
-  console.error("Mammoth failed to load");
-}
+// Track if user has actively selected each
+let hasPickedTemplate = false;
+let hasPickedData = false;
+let hasPickedOutput = false;
 
-let templatePath;
-let dataPath;
-let outputDir;
-
-const templateLabel = document.getElementById("templatePath");
-const dataLabel = document.getElementById("dataPathLabel");
-const dataFallbackLabel = document.getElementById("dataPath");
-const outputLabel = document.getElementById("outputPath");
-const previewCard = document.getElementById("previewCard");
-
-// ✅ MOVED UP: Define preview functions EARLY
-async function loadDocxPreview(filePath) {
-  try {
-    const { invoke } = window.__TAURI__.core;
-    const base64 = await invoke('read_file_bytes', { path: filePath });
-    const binaryString = atob(base64);
-    const uint8Array = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      uint8Array[i] = binaryString.charCodeAt(i);
-    }
-    const arrayBuffer = uint8Array.buffer;
-    const result = await mammoth.convertToHtml({ arrayBuffer });
-    document.getElementById("previewText").innerHTML =
-      result.value || "<em>Empty document</em>";
-  } catch (err) {
-    console.error("Preview error:", err);
-    document.getElementById("previewText").innerHTML =
-      `<em>Failed to load preview: ${err.message || err}</em>`;
-  }
-}
-
-async function loadXlsxPreview(filePath) {
-  try {
-    const tauri = window.__TAURI__;
-    if (!tauri?.fs?.readFile) {
-      throw new Error("FS plugin not available");
-    }
-    const uint8 = await tauri.fs.readFile(filePath);
-    const workbook = window.XLSX.read(uint8, { type: "array" });
-    const firstSheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[firstSheetName];
-    const html = window.XLSX.utils.sheet_to_html(sheet, { editable: false });
-    document.getElementById("dataPreview").innerHTML = html;
-  } catch (err) {
-    console.error("XLSX preview error:", err);
-    document.getElementById("dataPreview").innerHTML =
-      "<em>Failed to load data preview.</em>";
-  }
-}
-
-///////////////
-// Handle "Add to Quick Templates" click
-//////////////
-const addToQuickBtn = document.getElementById("addToQuickTemplates");
-let quickTemplates = JSON.parse(localStorage.getItem("quickTemplates") || "[]");
-addToQuickBtn.addEventListener("click", async () => {
-  if (!templatePath) return;
-
-  const defaultName = templatePath
-    .split(/[\\/]/)
-    .pop()
-    .replace(/\.docx$/i, "");
-
-  const name = await showModalPrompt("Name this template for quick access:", defaultName);
-
-  if (name && name.trim()) {
-    const cleanName = name.trim();
-    const exists = quickTemplates.some(t => t.path === templatePath);
-    
-    if (!exists) {
-      quickTemplates.push({ name: cleanName, path: templatePath });
-      localStorage.setItem("quickTemplates", JSON.stringify(quickTemplates));
-      renderQuickTemplates();
-      alert(`✅ "${cleanName}" added to Quick Templates!`);
-    } else {
-      alert("This template is already in your quick list.");
-    }
-  }
-});
-
-// render quick templates 
-const quickTemplatesPanel = document.getElementById("quickTemplatesPanel");
-const quickTemplatesListRight = document.getElementById("quickTemplatesListRight");
-
-function renderQuickTemplates() {
-  const quickTemplatesPanel = document.getElementById("quickTemplatesPanel");
-  const quickTemplatesListRight = document.getElementById("quickTemplatesListRight");
-  const pathFallback = document.getElementById("pathFallback");
-
-  if (!quickTemplatesPanel || !quickTemplatesListRight) return;
-
-  const hasTemplates = quickTemplates.length > 0;
-  const hasData = quickDataFiles.length > 0;
-
-  if (hasTemplates || hasData) {
-    quickTemplatesPanel.classList.remove("hidden");
-    quickTemplatesListRight.innerHTML = "";
-
-    if (hasTemplates) {
-      const templateHeader = document.createElement("div");
-      templateHeader.className = "w-full text-xs font-medium text-gray-500 uppercase tracking-wide mt-2";
-      templateHeader.textContent = "Templates";
-      quickTemplatesListRight.appendChild(templateHeader);
-
-      quickTemplates.forEach((item, index) => {
-        const itemDiv = document.createElement("div");
-        itemDiv.className = "flex items-center justify-between group py-1";
-
-        const nameLabel = document.createElement("span");
-        nameLabel.className = "text-xs text-blue-800 cursor-pointer truncate flex-1 mr-2";
-        nameLabel.textContent = item.name;
-        nameLabel.title = item.path;
-        nameLabel.onclick = () => loadTemplateFromQuick(item);
-
-        const actionsDiv = document.createElement("div");
-        actionsDiv.className = "flex items-center gap-6";
-
-        const renameBtn = document.createElement("button");
-        renameBtn.type = "button";
-        renameBtn.className = "text-xs text-gray-500 hover:text-blue-600";
-        renameBtn.title = "Rename";
-        renameBtn.textContent = "✏️";
-        renameBtn.onclick = async (e) => {
-          e.stopPropagation();
-          const newName = await showModalPrompt("Rename template:", item.name);
-          if (newName) {
-            quickTemplates[index].name = newName;
-            localStorage.setItem("quickTemplates", JSON.stringify(quickTemplates));
-            renderQuickTemplates();
-          }
-        };
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.type = "button";
-        deleteBtn.className = "text-xs text-gray-500 hover:text-red-600";
-        deleteBtn.title = "Remove from Quick Templates";
-        deleteBtn.textContent = "🗑️";
-        deleteBtn.onclick = async (e) => {
-          e.stopPropagation();
-          const confirmed = await showConfirm(
-            "Remove Template?",
-            `Remove "${item.name}"?`
-          );
-          if (confirmed) {
-            quickTemplates = quickTemplates.filter(t => t.path !== item.path);
-            localStorage.setItem("quickTemplates", JSON.stringify(quickTemplates));
-            renderQuickTemplates();
-          }
-        };
-
-        actionsDiv.appendChild(renameBtn);
-        actionsDiv.appendChild(deleteBtn);
-        itemDiv.appendChild(nameLabel);
-        itemDiv.appendChild(actionsDiv);
-        quickTemplatesListRight.appendChild(itemDiv);
-      });
-    }
-
-    if (hasData) {
-      const dataHeader = document.createElement("div");
-      dataHeader.className = "w-full text-xs font-medium text-gray-500 uppercase tracking-wide mt-3";
-      dataHeader.textContent = "Data Files";
-      quickTemplatesListRight.appendChild(dataHeader);
-
-      quickDataFiles.forEach((item, index) => {
-        const itemDiv = document.createElement("div");
-        itemDiv.className = "flex items-center justify-between group py-1";
-
-        const nameLabel = document.createElement("span");
-        nameLabel.className = "text-xs text-green-800 cursor-pointer truncate flex-1 mr-2";
-        nameLabel.textContent = item.name;
-        nameLabel.title = item.path;
-        nameLabel.onclick = () => loadDataFromQuick(item);
-
-        const actionsDiv = document.createElement("div");
-        actionsDiv.className = "flex items-center gap-6";
-
-        const renameBtn = document.createElement("button");
-        renameBtn.type = "button";
-        renameBtn.className = "text-xs text-gray-500 hover:text-green-600";
-        renameBtn.title = "Rename";
-        renameBtn.textContent = "✏️";
-        renameBtn.onclick = async (e) => {
-          e.stopPropagation();
-          const newName = await showModalPrompt("Rename data file:", item.name);
-          if (newName) {
-            quickDataFiles[index].name = newName;
-            localStorage.setItem("quickDataFiles", JSON.stringify(quickDataFiles));
-            renderQuickTemplates();
-          }
-        };
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.type = "button";
-        deleteBtn.className = "text-xs text-gray-500 hover:text-red-600";
-        deleteBtn.title = "Remove from Quick Data";
-        deleteBtn.textContent = "🗑️";
-        deleteBtn.onclick = async (e) => {
-          e.stopPropagation();
-          const confirmed = await showConfirm(
-            "Remove Data File?",
-            `Remove "${item.name}"?`
-          );
-          if (confirmed) {
-            quickDataFiles = quickDataFiles.filter(f => f.path !== item.path);
-            localStorage.setItem("quickDataFiles", JSON.stringify(quickDataFiles));
-            renderQuickTemplates();
-          }
-        };
-
-        actionsDiv.appendChild(renameBtn);
-        actionsDiv.appendChild(deleteBtn);
-        itemDiv.appendChild(nameLabel);
-        itemDiv.appendChild(actionsDiv);
-        quickTemplatesListRight.appendChild(itemDiv);
-      });
-    }
-  } else {
-    quickTemplatesPanel.classList.add("hidden");
-  }
-
-  const hasQuick = hasTemplates || hasData;
-  if (pathFallback) {
-    pathFallback.classList.toggle("hidden", hasQuick);
-  }
-}
 
 function loadTemplateFromQuick(item) {
   templatePath = item.path;
   templateLabel.textContent = item.path;
   document.getElementById("compactTemplate").textContent = item.name;
-  loadDocxPreview(item.path); // ✅ Now safe!
+  loadDocxPreview(item.path);
   previewCard.classList.remove("hidden");
-  document.getElementById("addToQuickTemplates").classList.remove("hidden");
-  updateGenerateButton();
+  addToQuickBtn.classList.remove("hidden");
+  updateUI();
+}
+function loadOutputFromQuick(item) {
+  outputDir = item.path;
+  outputPathLabel.textContent = item.path;
+  document.getElementById("compactOutput").textContent = item.name;
+  addToQuickOutputBtn.classList.remove("hidden");
+  loadOutputFolderContents(item.path);
+  updateUI();
+}
+function loadDataFromQuick(item) {
+  dataPath = item.path;
+  dataLabel.textContent = item.path;
+  //dataFallbackLabel.textContent = item.path;
+  document.getElementById("compactData").textContent = item.name;
+
+  const isCsv = dataPath.toLowerCase().endsWith('.csv');
+  const isXlsx = dataPath.toLowerCase().endsWith('.xlsx');
+
+  if (isCsv || isXlsx) {
+    console.log(dataPath)
+    loadXlsxPreview(dataPath);
+  } else {
+    document.getElementById("dataPreview").innerHTML = "<em>Unsupported file type</em>";
+  }
+
+  addToQuickDataBtn.classList.remove("hidden");
+  updateUI();
 }
 
-document.getElementById("pickTemplate").addEventListener("click", async () => {
-  const newPath = await open({
-    filters: [{ name: "DOCX", extensions: ["docx"] }]
-  });
+// Add to your DOM elements section
+const outputPathLabel = document.getElementById("outputPathLabel");
+const addToQuickOutputBtn = document.getElementById("addToQuickOutput");
 
-  if (newPath) {
-    templatePath = newPath;
-    templateLabel.textContent = templatePath;
-    document.getElementById("compactTemplate").textContent = 
-      templatePath.split(/[\\/]/).pop();
-    await loadDocxPreview(templatePath); // ✅ Now safe!
+
+const quickCallbacks = {
+  onTemplateClick: loadTemplateFromQuick,
+  onDataClick: loadDataFromQuick,
+  onOutputClick: loadOutputFromQuick ,
+};
+
+// DOM elements
+const templateLabel = document.getElementById("templatePath");
+const dataLabel = document.getElementById("dataPathLabel");
+const dataFallbackLabel = document.getElementById("dataPath");
+const outputLabel = document.getElementById("outputPath");
+const previewCard = document.getElementById("previewCard");
+const addToQuickBtn = document.getElementById("addToQuickTemplates");
+const addToQuickDataBtn = document.getElementById("addToQuickData");
+
+// Initialize output
+if (outputDir) {
+  outputLabel.textContent = outputDir;
+  document.getElementById("compactOutput").textContent = outputDir.split(/[\\/]/).pop();
+}
+updateUI();
+
+// Preview loader for XLSX/CSV
+// Preview loader for XLSX/CSV
+async function loadXlsxPreview(filePath) {
+  try {
+    console.log("Work 1");
+    
+    // ✅ Use the same Rust method as DOCX
+    const { invoke } = window.__TAURI__.core;
+    const base64 = await invoke('read_file_bytes', { path: filePath });
+    
+    // Decode base64 to Uint8Array
+    const binaryString = atob(base64);
+    const uint8Array = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      uint8Array[i] = binaryString.charCodeAt(i);
+    }
+    const uint8 = uint8Array; // SheetJS expects Uint8Array
+
+    console.log("Work 1 after");
+    
+    if (filePath.toLowerCase().endsWith('.csv')) {
+      console.log("Work 2");
+      const csv = new TextDecoder().decode(uint8);
+      document.getElementById("dataPreview").innerHTML = csvToHtml(csv);
+    } else {
+      console.log("Work 3");
+      const wb = window.XLSX.read(uint8, { type: 'array' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      document.getElementById("dataPreview").innerHTML = 
+        window.XLSX.utils.sheet_to_html(sheet, { editable: false });
+    }
+  } catch (err) {
+    console.error("XLSX preview error:", err);
+    const errorMsg = err?.message || err?.toString() || 'Unknown error';
+    document.getElementById("dataPreview").innerHTML = 
+      `<em>Preview failed: ${errorMsg}</em>`;
+  }
+}
+// Template picker
+document.getElementById("pickTemplate").addEventListener("click", async () => {
+  const path = await open({ filters: [{ name: "DOCX", extensions: ["docx"] }] });
+  if (path) {
+    templatePath = path;
+    templateLabel.textContent = path;
+    hasPickedTemplate=true;
+    document.getElementById("compactTemplate").textContent = path.split(/[\\/]/).pop();
+    await loadDocxPreview(path);
     previewCard.classList.remove("hidden");
     addToQuickBtn.classList.remove("hidden");
   } else {
-    templatePath = null;
-    templateLabel.textContent = "";
-    document.getElementById("previewText").innerHTML = "";
-    document.getElementById("compactTemplate").textContent = "No template";
-    addToQuickBtn.classList.add("hidden");
+    // handle cancel
   }
-  updateGenerateButton();
-  updatePreviewVisibility();
+  updateUI();
 });
 
-function updateGenerateButton() {
-  const generateBtn = document.getElementById("generate");
-  generateBtn.disabled = !(templatePath && dataPath && outputDir);
-}
-
+// Data picker
 document.getElementById("pickData").addEventListener("click", async () => {
-  const raw = await open({
-    filters: [{ name: "Data", extensions: ["csv", "xlsx"] }]
-  });
-
+  const raw = await open({ filters: [{ name: "Data", extensions: ["csv", "xlsx"] }] });
   const path = Array.isArray(raw) ? raw[0] : raw;
-  dataPath = path ?? null;
-  dataLabel.textContent = dataPath ?? "";
-  dataFallbackLabel.textContent = dataPath ?? "";
-
-  if (dataPath && dataPath.toLowerCase().endsWith(".xlsx")) {
-    await loadXlsxPreview(dataPath); // ✅ Now safe!
-    previewCard.classList.remove("hidden");
+  if (path) {
+    dataPath = path;
+    hasPickedData =true;
+    dataLabel.textContent = path;
+    dataFallbackLabel.textContent = path;
+    document.getElementById("compactData").textContent = path.split(/[\\/]/).pop();
+    await loadXlsxPreview(path);
     addToQuickDataBtn.classList.remove("hidden");
-  } else {
-    document.getElementById("dataPreview").innerHTML = "";
   }
-
-  updateGenerateButton();
-  updatePreviewVisibility();
+  updateUI();
 });
 
+// Output picker
 document.getElementById("pickOutput").addEventListener("click", async () => {
-  outputDir = await open({ directory: true });
-  outputLabel.textContent = outputDir ?? "";
-  updateGenerateButton();
+  const dir = await open({ directory: true });
+  if (dir) {
+    outputDir = dir;
+    hasPickedOutput = true;
+    outputLabel.textContent = dir;
+    outputPathLabel.textContent = dir;
+    document.getElementById("compactOutput").textContent = dir.split(/[\\/]/).pop();
+    localStorage.setItem("lastOutputDir", dir);
+    addToQuickOutputBtn.classList.remove("hidden");
+    
+    // ✅ Load folder contents
+    await loadOutputFolderContents(dir);
+  } else {
+    outputDir = null;
+    outputLabel.textContent = "";
+    outputPathLabel.textContent = "";
+    addToQuickOutputBtn.classList.add("hidden");
+    // Clear contents
+    document.getElementById("outputFolderContents").innerHTML = 
+      '<div class="text-gray-500 italic">No folder selected</div>';
+  }
+  updateUI();
 });
 
+// Clear buttons
 document.getElementById("clearTemplate").addEventListener("click", () => {
   templatePath = null;
-  templateLabel.textContent = "";
-  document.getElementById("previewText").innerHTML = "";
-  document.getElementById("compactTemplate").textContent = "No template";
-  document.getElementById("addToQuickTemplates").classList.add("hidden");
-  updateGenerateButton();
-  updatePreviewVisibility();
+  hasPickedTemplate = false;
+  // reset UI
+  updateUI();
 });
 
 document.getElementById("clearData").addEventListener("click", () => {
   dataPath = null;
-  dataLabel.textContent = "";
-  dataFallbackLabel.textContent = "";
-  document.getElementById("dataPreview").innerHTML = "";
-  document.getElementById("compactData").textContent = "No data";
-  document.getElementById("addToQuickData").classList.add("hidden");
-  updateGenerateButton();
-  updatePreviewVisibility();
+  hasPickedData=false;
+  // reset UI
+  updateUI();
 });
 
+document.getElementById("clearOutput").addEventListener("click", () => {
+  outputDir = null;
+  outputPathLabel.textContent = "";
+  document.getElementById("compactOutput").textContent = "No output";
+  addToQuickOutputBtn.classList.add("hidden");
+  const contentsContainer = document.getElementById("outputFolderContents");
+  if (contentsContainer) {
+    contentsContainer.innerHTML = '<div class="text-gray-500 italic">No folder selected</div>';
+  }
+  
+  updateUI();
+});
+// Add to Quick
+// Add to Quick Templates
+addToQuickBtn.addEventListener("click", async () => {
+  if (!templatePath) return;
+  const defaultName = templatePath.split(/[\\/]/).pop().replace(/\.docx$/i, "");
+  const name = await showModalPrompt("Name this template:", defaultName);
+  if (name) {
+    const added = addQuickTemplate({ name: name.trim(), path: templatePath });
+    renderQuickTemplates(quickCallbacks);
+    if (added) {
+      alert(`✅ "${name.trim()}" added to Quick Templates!`);
+    } else {
+      alert(`ℹ️ This template is already saved.`);
+    }
+  }
+});
+
+// Add to Quick Data
+addToQuickDataBtn.addEventListener("click", async () => {
+  if (!dataPath) return;
+  const ext = dataPath.toLowerCase().endsWith('.csv') ? 'csv' : 'xlsx';
+  const defaultName = dataPath.split(/[\\/]/).pop().replace(new RegExp(`\\.${ext}$`, 'i'), "");
+  const name = await showModalPrompt("Name this data file:", defaultName);
+  if (name) {
+    const added = addQuickData({ name: name.trim(), path: dataPath });
+    renderQuickTemplates(quickCallbacks);
+    if (added) {
+      alert(`✅ "${name.trim()}" added to Quick Data!`);
+    } else {
+      alert(`ℹ️ This data file is already saved.`);
+    }
+  }
+});
+
+// Add to Quick Output
+addToQuickOutputBtn.addEventListener("click", async () => {
+  if (!outputDir) return;
+  const defaultName = outputDir.split(/[\\/]/).pop();
+  const name = await showModalPrompt("Name this output folder:", defaultName);
+  if (name) {
+    const added = addQuickOutput({ name: name.trim(), path: outputDir });
+    renderQuickTemplates(quickCallbacks); // reuses same panel
+    if (added) {
+      alert(`✅ "${name.trim()}" added to Quick Output!`);
+    } else {
+      alert(`ℹ️ This output folder is already saved.`);
+    }
+  }
+});
+
+// Generate
+// In generate button handler
 document.getElementById("generate").addEventListener("click", async () => {
   if (!templatePath || !dataPath || !outputDir) {
-    alert("Please select all inputs.");
+    alert("Select all inputs");
     return;
   }
-
   try {
-    await invoke("generate_docs", {
-      templatePath,
-      dataPath,
-      outputDir,
-    });
-    alert("Documents generated successfully.");
+    await invoke("generate_docs", { templatePath, dataPath, outputDir });
+    alert("Success!");
+    
+    // ✅ Refresh folder contents after generation
+    await loadOutputFolderContents(outputDir);
   } catch (err) {
     alert("Error: " + err);
   }
 });
 
-let quickDataFiles = JSON.parse(localStorage.getItem("quickDataFiles") || "[]");
-const addToQuickDataBtn = document.getElementById("addToQuickData");
-
-addToQuickDataBtn.addEventListener("click", async () => {
-  if (!dataPath) return;
-
-  const defaultName = dataPath
-    .split(/[\\/]/)
-    .pop()
-    .replace(/\.(xlsx|csv)$/i, "");
-
-  const name = await showModalPrompt("Name this data file for quick access:", defaultName);
-
-  if (name && name.trim()) {
-    const cleanName = name.trim();
-    const exists = quickDataFiles.some(f => f.path === dataPath);
+// Load and display output folder contents
+async function loadOutputFolderContents(folderPath) {
+  try {
+    const { invoke } = window.__TAURI__.core;
+    const files = await invoke('list_directory', { path: folderPath });
     
-    if (!exists) {
-      quickDataFiles.push({ name: cleanName, path: dataPath });
-      localStorage.setItem("quickDataFiles", JSON.stringify(quickDataFiles));
-      renderQuickTemplates();
-      alert(`✅ "${cleanName}" added to Quick Data!`);
+    const contentsContainer = document.getElementById("outputFolderContents");
+    if (!contentsContainer) return;
+
+    if (files.length === 0) {
+      contentsContainer.innerHTML = '<div class="text-gray-500 italic">Empty folder</div>';
     } else {
-      alert("This data file is already in your quick list.");
+      contentsContainer.innerHTML = files
+        .map(file => `<div class="flex items-center gap-2">
+          <span class="text-blue-600">📄</span>
+          <span class="truncate">${escapeHtml(file)}</span>
+        </div>`)
+        .join('');
+    }
+  } catch (err) {
+    console.error("Failed to load folder contents:", err);
+    const contentsContainer = document.getElementById("outputFolderContents");
+    if (contentsContainer) {
+      contentsContainer.innerHTML = '<div class="text-red-500 text-sm">Could not read folder</div>';
     }
   }
-});
-
-function loadDataFromQuick(item) {
-  dataPath = item.path;
-  dataLabel.textContent = item.path;
-  dataFallbackLabel.textContent = item.path;
-  document.getElementById("compactData").textContent = item.name;
-  if (dataPath.toLowerCase().endsWith(".xlsx")) {
-    loadXlsxPreview(dataPath); // ✅ Now safe!
-  } else {
-    document.getElementById("dataPreview").innerHTML = "";
-  }
-  addToQuickDataBtn.classList.remove("hidden");
-  updateGenerateButton();
-  updatePreviewVisibility();
 }
+
+// Helper function to escape HTML
+//function escapeHtml(text) {
+//  const div = document.createElement('div');
+//  div.textContent = text;
+//  return div.innerHTML;
+//}
+
+
+// Initial render — PASS CALLBACKS
+renderQuickTemplates(quickCallbacks);
 
 function updatePreviewVisibility() {
   const hasTemplate = !!templatePath;
   const hasData = !!dataPath;
   previewCard.classList.toggle("hidden", !hasTemplate && !hasData);
 }
+function updateGenerateButton() {
+  const generateBtn = document.getElementById("generate");
+  generateBtn.disabled = !(templatePath && dataPath && outputDir);
+}
 
-renderQuickTemplates();
+// UI helpers
+function updateUI() {
+  const genBtn = document.getElementById("generate");
+  genBtn.disabled = !(templatePath && dataPath && outputDir);
+
+  const hasPreview = templatePath || dataPath || outputDir;
+  previewCard.classList.toggle("hidden", !hasPreview);
+
+  if (!templatePath) {
+    document.getElementById("compactTemplate").textContent = "No template";
+    document.getElementById("previewText").innerHTML = "";
+    addToQuickBtn.classList.add("hidden");
+  }
+  if (!dataPath) {
+    document.getElementById("compactData").textContent = "No data";
+    document.getElementById("dataPreview").innerHTML = "";
+    addToQuickDataBtn.classList.add("hidden");
+  }
+  if (!outputDir) {
+    document.getElementById("compactOutput").textContent = "No output";
+    addToQuickOutputBtn.classList.add("hidden");
+  }
+}
+
+// Initial render
+renderQuickTemplates(quickCallbacks);
