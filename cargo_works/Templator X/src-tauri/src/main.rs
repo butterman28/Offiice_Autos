@@ -2,17 +2,38 @@ use std::{fs, path::Path, collections::HashMap};
 use calamine::{open_workbook, Reader, Xlsx, XlsxError};
 use csv::ReaderBuilder;
 use docx_template::docx::DocxTemplate;
+use base64::Engine;
 
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
-
+// Helper function to sanitize filenames
+fn sanitize_filename(input: &str) -> String {
+    let mut result = String::new();
+    for c in input.chars() {
+        match c {
+            // Allow alphanumeric, spaces, hyphens, underscores, periods
+            'a'..='z' | 'A'..='Z' | '0'..='9' | ' ' | '-' | '_' | '.' => {
+                result.push(c);
+            }
+            // Replace other characters with underscore
+            _ => {
+                if !result.ends_with('_') {
+                    result.push('_');
+                }
+            }
+        }
+    }
+    // Trim leading/trailing spaces and underscores
+    result.trim_matches(|c| c == ' ' || c == '_').to_string()
+}
 #[tauri::command]
 fn generate_docs(
     template_path: String,
     data_path: String,
     output_dir: String,
+    name_column: Option<String>, // ← NEW PARAMETER
 ) -> Result<(), String> {
     // Ensure output directory exists
     if !Path::new(&output_dir).exists() {
@@ -23,7 +44,21 @@ fn generate_docs(
 
     for (index, row) in rows.iter().enumerate() {
         // Build output file path
-        let file_name = format!("output_{}.docx", index + 1);
+        let file_name = if let Some(col_name) = &name_column {
+            if let Some(value) = row.get(col_name) {
+                let clean_value = sanitize_filename(value);
+                if !clean_value.is_empty() {
+                    format!("{}.docx", clean_value)
+                } else {
+                    format!("output_{}.docx", index + 1)
+                }
+            } else {
+                format!("output_{}.docx", index + 1)
+            }
+        } else {
+            format!("output_{}.docx", index + 1)
+        };
+
         let output_path = Path::new(&output_dir).join(file_name);
 
         // Create template instance
@@ -116,15 +151,13 @@ fn read_file_bytes(path: String) -> Result<String, String> {
         .map_err(|e| format!("Failed to read file '{}': {}", path, e))?;
     
     // Encode as base64 string (safe for JSON)
-    let base64 = base64::encode(bytes);
+    let base64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
     Ok(base64)
 }
 
 #[tauri::command]
 async fn list_directory(path: String) -> Result<Vec<String>, String> {
     use std::fs;
-    use std::path::Path;
-
     let entries = fs::read_dir(&path)
         .map_err(|e| format!("Failed to read directory '{}': {}", path, e))?;
 

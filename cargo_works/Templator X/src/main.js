@@ -14,11 +14,11 @@ const { invoke } = window.__TAURI__.core;
 //const {}
 
 // Global state (only what's needed globally)
-// In main.js, replace your state with:
 export let templatePath = null;
 export let dataPath = null;
-export let outputDir = null; // ← Start as null
-
+export let outputDir = null;
+let selectedNameColumn = null; // ← NEW STATE
+let availableColumns = []; // ← NEW STATE
 // Track if user has actively selected each
 let hasPickedTemplate = false;
 let hasPickedData = false;
@@ -90,22 +90,19 @@ if (outputDir) {
 updateUI();
 
 // Preview loader for XLSX/CSV
-// Preview loader for XLSX/CSV
 async function loadXlsxPreview(filePath) {
   try {
     console.log("Work 1");
     
-    // ✅ Use the same Rust method as DOCX
     const { invoke } = window.__TAURI__.core;
     const base64 = await invoke('read_file_bytes', { path: filePath });
     
-    // Decode base64 to Uint8Array
     const binaryString = atob(base64);
     const uint8Array = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
       uint8Array[i] = binaryString.charCodeAt(i);
     }
-    const uint8 = uint8Array; // SheetJS expects Uint8Array
+    const uint8 = uint8Array;
 
     console.log("Work 1 after");
     
@@ -113,12 +110,31 @@ async function loadXlsxPreview(filePath) {
       console.log("Work 2");
       const csv = new TextDecoder().decode(uint8);
       document.getElementById("dataPreview").innerHTML = csvToHtml(csv);
+      
+      // Extract CSV columns
+      const lines = csv.split('\n').filter(line => line.trim());
+      if (lines.length > 0) {
+        const headers = lines[0].split(',').map(h => h.trim());
+        availableColumns = headers;
+        showColumnSelector();
+      }
     } else {
       console.log("Work 3");
       const wb = window.XLSX.read(uint8, { type: 'array' });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       document.getElementById("dataPreview").innerHTML = 
         window.XLSX.utils.sheet_to_html(sheet, { editable: false });
+      
+      // Extract XLSX columns (first row)
+      const range = window.XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+      const headers = [];
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = window.XLSX.utils.encode_cell({ r: 0, c: C });
+        const cell = sheet[cellAddress];
+        headers.push(cell ? cell.v.toString() : `Column ${C + 1}`);
+      }
+      availableColumns = headers;
+      showColumnSelector();
     }
   } catch (err) {
     console.error("XLSX preview error:", err);
@@ -166,7 +182,7 @@ document.getElementById("pickOutput").addEventListener("click", async () => {
   if (dir) {
     outputDir = dir;
     hasPickedOutput = true;
-    outputLabel.textContent = dir;
+    //outputLabel.textContent = dir;
     outputPathLabel.textContent = dir;
     document.getElementById("compactOutput").textContent = dir.split(/[\\/]/).pop();
     localStorage.setItem("lastOutputDir", dir);
@@ -176,7 +192,7 @@ document.getElementById("pickOutput").addEventListener("click", async () => {
     await loadOutputFolderContents(dir);
   } else {
     outputDir = null;
-    outputLabel.textContent = "";
+    //outputLabel.textContent = "";
     outputPathLabel.textContent = "";
     addToQuickOutputBtn.classList.add("hidden");
     // Clear contents
@@ -263,18 +279,22 @@ addToQuickOutputBtn.addEventListener("click", async () => {
   }
 });
 
-// Generate
-// In generate button handler
+// generate button handler
 document.getElementById("generate").addEventListener("click", async () => {
   if (!templatePath || !dataPath || !outputDir) {
     alert("Select all inputs");
     return;
   }
+  
   try {
-    await invoke("generate_docs", { templatePath, dataPath, outputDir });
+    // Pass the selected naming column (or null for auto-detect)
+    await invoke("generate_docs", { 
+      templatePath, 
+      dataPath, 
+      outputDir, 
+      nameColumn: selectedNameColumn 
+    });
     alert("Success!");
-    
-    // ✅ Refresh folder contents after generation
     await loadOutputFolderContents(outputDir);
   } catch (err) {
     alert("Error: " + err);
@@ -354,5 +374,53 @@ function updateUI() {
   }
 }
 
+function showColumnSelector() {
+  const selectorContainer = document.getElementById("columnSelector");
+  const selectElement = document.getElementById("nameColumnSelect");
+  
+  if (selectorContainer && selectElement && availableColumns.length > 0) {
+    // Clear existing options (except first)
+    selectElement.innerHTML = '<option value="">Auto-detect (filename/name/id)</option>';
+    
+    // Add column options
+    availableColumns.forEach(column => {
+      const option = document.createElement("option");
+      option.value = column;
+      option.textContent = column;
+      selectElement.appendChild(option);
+    });
+    
+    // Restore previously selected column if it exists
+    if (selectedNameColumn && availableColumns.includes(selectedNameColumn)) {
+      selectElement.value = selectedNameColumn;
+    }
+    
+    selectorContainer.classList.remove("hidden");
+  }
+}
+
+// Handle column selection change
+document.getElementById("nameColumnSelect")?.addEventListener("change", (e) => {
+  selectedNameColumn = e.target.value || null;
+});
+
 // Initial render
-renderQuickTemplates(quickCallbacks);
+// ✅ Wait for DOM to be ready before initializing anything
+document.addEventListener('DOMContentLoaded', () => {
+  // Initialize output from localStorage if it exists
+  const savedOutput = localStorage.getItem("lastOutputDir");
+  if (savedOutput) {
+    //outputDir = savedOutput;
+    //outputLabel.textContent = savedOutput;
+    //document.getElementById("compactOutput").textContent = savedOutput.split(/[\\/]/).pop();
+    
+    // Load folder contents for saved output
+    //loadOutputFolderContents(savedOutput);
+  }
+  
+  // Initial UI update
+  updateUI();
+  
+  // Render quick lists
+  renderQuickTemplates(quickCallbacks);
+});
