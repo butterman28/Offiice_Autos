@@ -12,7 +12,6 @@ This template should help get you started developing with Tauri in vanilla HTML,
 - npm install 
 - npm run dev 
 
-```markdown
 ## How to Use
 
 **Templator X** is a desktop application that generates multiple DOCX documents from a single template and a data file (CSV or XLSX). Follow the steps below to get started.
@@ -66,7 +65,7 @@ This template should help get you started developing with Tauri in vanilla HTML,
 - Manage saved items using:
   - **✏️ Rename**
   - **🗑️ Delete**
-```
+
 
 
 
