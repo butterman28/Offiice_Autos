@@ -1,7 +1,7 @@
 // ./assets/components/docx_handler.js
 
-const mammoth = window.mammoth;
-
+//const mammoth = window.mammoth;
+import mammoth from "mammoth";
 import {
   getQuickTemplates,
   getQuickDataFiles,

@@ -4,15 +4,23 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "tauri": "tauri",
-    "dev": "npm-run-all --parallel tailwind:watch \"tauri dev\"",
-    "tailwind:watch": "tailwindcss -i ./src/input.css -o ./src/output.css --watch",
-    "tailwind:build": "tailwindcss -i ./src/input.css -o ./src/output.css",
-    "build": "npm run tailwind:build",
-    "tauri:build": "tauri build"
-  },
+  "tauri": "tauri",
+
+  "dev": "npm-run-all --parallel tailwind:watch esbuild:watch \"tauri dev\"",
+
+  "build": "npm-run-all tailwind:build esbuild:build",
+
+  "tauri:build": "npm run build && tauri build",
+
+  "tailwind:watch": "tailwindcss -i ./src/input.css -o ./src/output.css --watch",
+  "tailwind:build": "tailwindcss -i ./src/input.css -o ./src/output.css",
+
+  "esbuild:watch": "esbuild src/main.js --bundle --platform=browser --format=esm --outfile=src/app.js --watch",
+  "esbuild:build": "esbuild src/main.js --bundle --platform=browser --format=esm --outfile=src/app.js --minify"
+},
   "devDependencies": {
-    "@tauri-apps/cli": "^2"
+    "@tauri-apps/cli": "^2",
+    "esbuild": "^0.27.2"
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.18",

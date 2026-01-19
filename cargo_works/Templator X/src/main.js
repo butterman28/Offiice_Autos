@@ -8,6 +8,8 @@ import {
   addQuickData,
   addQuickOutput
 } from "./assets/states/quickstore.js";
+import * as XLSX from "xlsx";
+
 
 const { open } = window.__TAURI__.dialog;
 const { invoke } = window.__TAURI__.core;
@@ -120,16 +122,16 @@ async function loadXlsxPreview(filePath) {
       }
     } else {
       console.log("Work 3");
-      const wb = window.XLSX.read(uint8, { type: 'array' });
+      const wb = XLSX.read(uint8, { type: 'array' });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       document.getElementById("dataPreview").innerHTML = 
-        window.XLSX.utils.sheet_to_html(sheet, { editable: false });
+        XLSX.utils.sheet_to_html(sheet, { editable: false });
       
       // Extract XLSX columns (first row)
-      const range = window.XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+      const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
       const headers = [];
       for (let C = range.s.c; C <= range.e.c; ++C) {
-        const cellAddress = window.XLSX.utils.encode_cell({ r: 0, c: C });
+        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
         const cell = sheet[cellAddress];
         headers.push(cell ? cell.v.toString() : `Column ${C + 1}`);
       }
@@ -188,7 +190,7 @@ document.getElementById("pickOutput").addEventListener("click", async () => {
     localStorage.setItem("lastOutputDir", dir);
     addToQuickOutputBtn.classList.remove("hidden");
     
-    // ✅ Load folder contents
+    //  Load folder contents
     await loadOutputFolderContents(dir);
   } else {
     outputDir = null;
@@ -239,9 +241,9 @@ addToQuickBtn.addEventListener("click", async () => {
     const added = addQuickTemplate({ name: name.trim(), path: templatePath });
     renderQuickTemplates(quickCallbacks);
     if (added) {
-      alert(`✅ "${name.trim()}" added to Quick Templates!`);
+      alert(` "${name.trim()}" added to Quick Templates!`);
     } else {
-      alert(`ℹ️ This template is already saved.`);
+      alert(` This template is already saved.`);
     }
   }
 });
@@ -256,9 +258,9 @@ addToQuickDataBtn.addEventListener("click", async () => {
     const added = addQuickData({ name: name.trim(), path: dataPath });
     renderQuickTemplates(quickCallbacks);
     if (added) {
-      alert(`✅ "${name.trim()}" added to Quick Data!`);
+      alert(` "${name.trim()}" added to Quick Data!`);
     } else {
-      alert(`ℹ️ This data file is already saved.`);
+      alert(` This data file is already saved.`);
     }
   }
 });
@@ -272,9 +274,9 @@ addToQuickOutputBtn.addEventListener("click", async () => {
     const added = addQuickOutput({ name: name.trim(), path: outputDir });
     renderQuickTemplates(quickCallbacks); // reuses same panel
     if (added) {
-      alert(`✅ "${name.trim()}" added to Quick Output!`);
+      alert(` "${name.trim()}" added to Quick Output!`);
     } else {
-      alert(`ℹ️ This output folder is already saved.`);
+      alert(` This output folder is already saved.`);
     }
   }
 });
@@ -405,7 +407,7 @@ document.getElementById("nameColumnSelect")?.addEventListener("change", (e) => {
 });
 
 // Initial render
-// ✅ Wait for DOM to be ready before initializing anything
+//  Wait for DOM to be ready before initializing anything
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize output from localStorage if it exists
   const savedOutput = localStorage.getItem("lastOutputDir");
