@@ -1,6 +1,5 @@
 // ./main.js
-
-import { showModalPrompt, showConfirm } from "./assets/components/modal.js";
+import { showModalPrompt, showConfirm,showSnackbar } from "./assets/components/modal.js";
 import { csvToHtml,parseCsvLine,escapeHtml } from "./assets/components/csv2html.js";
 import { loadDocxPreview, renderQuickTemplates } from "./assets/components/docx_handler.js";
 import {
@@ -9,6 +8,7 @@ import {
   addQuickOutput
 } from "./assets/states/quickstore.js";
 import * as XLSX from "xlsx";
+import mammoth from "mammoth";
 
 
 const { open } = window.__TAURI__.dialog;
@@ -308,7 +308,7 @@ async function loadOutputFolderContents(folderPath) {
   try {
     const { invoke } = window.__TAURI__.core;
     const files = await invoke('list_directory', { path: folderPath });
-    
+
     const contentsContainer = document.getElementById("outputFolderContents");
     if (!contentsContainer) return;
 
@@ -316,12 +316,29 @@ async function loadOutputFolderContents(folderPath) {
       contentsContainer.innerHTML = '<div class="text-gray-500 italic">Empty folder</div>';
     } else {
       contentsContainer.innerHTML = files
-        .map(file => `<div class="flex items-center gap-2">
-          <span class="text-blue-600">📄</span>
-          <span class="truncate">${escapeHtml(file)}</span>
-        </div>`)
+        .map(file => {
+          const safeFile = escapeHtml(file);
+          const fullPath = `${folderPath}/${file}`.replace(/\\/g, '/'); // Normalize path
+          return `
+            <div class="flex items-center justify-between gap-2 py-1 border-b border-gray-100">
+              <button class="flex items-center gap-2 flex-1 text-left truncate hover:bg-gray-50 rounded px-1"
+                      data-action="preview" data-path="${escapeHtml(fullPath)}">
+                <span class="text-blue-600">📄</span>
+                <span class="truncate">${safeFile}</span>
+              </button>
+                 <button class="ml-auto text-red-500 hover:text-red-700 transition-colors"
+                        data-action="delete" data-path="${escapeHtml(fullPath)}" data-name="${safeFile}">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+            </div>
+          `;
+        })
         .join('');
     }
+    // Attach delegated event listeners
+    attachOutputFileEventListeners(folderPath);
   } catch (err) {
     console.error("Failed to load folder contents:", err);
     const contentsContainer = document.getElementById("outputFolderContents");
@@ -331,12 +348,120 @@ async function loadOutputFolderContents(folderPath) {
   }
 }
 
-// Helper function to escape HTML
-//function escapeHtml(text) {
-//  const div = document.createElement('div');
-//  div.textContent = text;
-//  return div.innerHTML;
-//}
+function attachOutputFileEventListeners(baseFolderPath) {
+  const container = document.getElementById("outputFolderContents");
+  if (!container) return;
+
+  container.addEventListener("click", async (e) => {
+    const action = e.target.closest('[data-action]');
+    if (!action) return;
+
+    const filePath = action.dataset.path;
+    const fileName = action.dataset.name || filePath.split('/').pop();
+
+    if (action.dataset.action === "preview") {
+      await previewFile(filePath);
+    } else if (action.dataset.action === "delete") {
+      const confirmed = await showConfirm(`Delete "${fileName}"?`, "This cannot be undone.");
+      if (confirmed) {
+        await deleteFile(filePath, baseFolderPath);
+      }
+    }
+  });
+}
+
+async function previewFile(filePath) {
+  const modalId = 'filePreviewModal';
+  let modal = document.getElementById(modalId);
+
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = modalId;
+    modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+      <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="px-4 py-3 border-b flex justify-between items-center">
+          <h3 class="font-semibold truncate">${escapeHtml(filePath.split('/').pop())}</h3>
+          <button id="closePreviewBtn" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button>
+        </div>
+        <div id="previewContent" class="p-4 overflow-auto flex-1 bg-gray-50">
+          <div class="text-center text-gray-500">Loading...</div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  const closeBtn = modal.querySelector('#closePreviewBtn');
+  const contentEl = modal.querySelector('#previewContent');
+
+  const closeModal = () => {
+    if (modal.parentNode) modal.parentNode.removeChild(modal);
+  };
+  closeBtn.onclick = closeModal;
+  modal.onclick = (e) => {
+    if (e.target === modal) closeModal();
+  };
+
+  try {
+    const extension = filePath.split('.').pop()?.toLowerCase();
+
+    if (['txt', 'log', 'md', 'json', 'csv', 'xml', 'html', 'js', 'css'].includes(extension)) {
+      const { invoke } = window.__TAURI__.core;
+      const content = await invoke('read_file_bytes', { path: filePath });
+      // read_file_bytes returns base64; decode to UTF-8 string
+      const binaryString = atob(content);
+      const text = new TextDecoder().decode(Uint8Array.from(binaryString, c => c.charCodeAt(0)));
+      contentEl.innerHTML = `<pre class="whitespace-pre-wrap font-mono text-sm">${escapeHtml(text)}</pre>`;
+
+    } else if (extension === 'docx') {
+      // Load .docx as ArrayBuffer
+      const { invoke } = window.__TAURI__.core;
+      const base64 = await invoke('read_file_bytes', { path: filePath });
+      const binaryString = atob(base64);
+      const bytes = Uint8Array.from(binaryString, c => c.charCodeAt(0));
+      const arrayBuffer = bytes.buffer;
+
+      // Convert .docx → HTML using Mammoth
+      const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+      const html = result.value; // The generated HTML
+      // Optional: show warnings in console
+      if (result.messages.length > 0) {
+        console.warn("Mammoth conversion warnings:", result.messages);
+      }
+
+      // Sanitize? (Mammoth output is generally safe, but consider DOMPurify if security is critical)
+      contentEl.innerHTML = html || '<div class="text-gray-500 italic">Empty document</div>';
+
+    } else if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(extension)) {
+      const { invoke } = window.__TAURI__.core;
+      const base64 = await invoke('read_file_bytes', { path: filePath });
+      contentEl.innerHTML = `<img src="data:image/${extension};base64,${base64}" class="max-w-full max-h-[70vh] object-contain" />`;
+
+    } else {
+      contentEl.innerHTML = `<div class="text-center text-gray-600 p-4">Preview not supported for .${extension} files.</div>`;
+    }
+  } catch (err) {
+    console.error("Preview failed:", err);
+    contentEl.innerHTML = `<div class="text-red-500 text-center p-4">Failed to load preview.<br>${escapeHtml(err.message || String(err))}</div>`;
+  }
+}
+
+async function deleteFile(filePath, baseFolderPath) {
+  try {
+    const { invoke } = window.__TAURI__.core;
+    await invoke('delete_file', { path: filePath });
+
+    // Optional: refresh the folder view
+    await loadOutputFolderContents(baseFolderPath);
+
+    showSnackbar("File deleted successfully.", "success");
+  } catch (err) {
+    console.error("Delete failed:", err);
+    showSnackbar("Failed to delete file.", "error");
+  }
+}
+
 
 
 // Initial render — PASS CALLBACKS

@@ -174,7 +174,11 @@ async fn list_directory(path: String) -> Result<Vec<String>, String> {
     file_names.sort();
     Ok(file_names)
 }
-
+#[tauri::command]
+async fn delete_file(path: String) -> Result<(), String> {
+    fs::remove_file(&path)
+        .map_err(|e| format!("Failed to delete file '{}': {}", path, e))
+}
 // --- Main entry point ---
 
 fn main() {
@@ -186,6 +190,7 @@ fn main() {
             generate_docs,
             list_directory,
             read_file_bytes,
+            delete_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

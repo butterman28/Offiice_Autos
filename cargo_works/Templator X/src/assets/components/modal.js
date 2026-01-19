@@ -125,3 +125,47 @@ export async function showModalPrompt(title, defaultValue = "") {
     inputEl.addEventListener("keydown", onKey, { once: true });
   });
 }
+
+// --- Snackbar Utility ---
+let snackbarInstance = null;
+
+function createSnackbar() {
+  if (snackbarInstance) return snackbarInstance;
+
+  const snackbar = document.createElement("div");
+  snackbar.id = "snackbar";
+  snackbar.className = "hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded shadow-lg text-white font-medium z-50 transition-opacity duration-300";
+  document.body.appendChild(snackbar);
+  snackbarInstance = snackbar;
+  return snackbar;
+}
+
+export function showSnackbar(message, type = "info") {
+  const snackbar = createSnackbar();
+
+  // Set background color based on type
+  const bgColor = {
+    success: "bg-green-600",
+    error: "bg-red-600",
+    warning: "bg-yellow-600",
+    info: "bg-blue-600"
+  }[type] || "bg-gray-600";
+
+  snackbar.className = snackbar.className
+    .replace(/bg-\w+-\d+/g, "") // Remove old bg class
+    .trim();
+  snackbar.classList.add(...bgColor.split(" "));
+  snackbar.textContent = message;
+
+  // Show
+  snackbar.classList.remove("hidden");
+  snackbar.style.opacity = "1";
+
+  // Auto-hide after 3 seconds
+  setTimeout(() => {
+    snackbar.style.opacity = "0";
+    setTimeout(() => {
+      snackbar.classList.add("hidden");
+    }, 300); // Match duration
+  }, 3000);
+}
