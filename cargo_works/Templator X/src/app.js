@@ -24035,10 +24035,10 @@ var send = async (serviceID, templateID, templateParams, options) => {
 };
 
 // src/assets/components/feedback.js
-var EMAILJS_USER_ID = "YOUR_EMAILJS_USER_ID";
-var EMAILJS_SERVICE_ID = "YOUR_EMAILJS_SERVICE_ID";
-var EMAILJS_TEMPLATE_ID = "YOUR_EMAILJS_TEMPLATE_ID";
-var YOUR_EMAIL = "youremail@gmail.com";
+var EMAILJS_USER_ID = "attaI75BX2I65OjNW";
+var EMAILJS_SERVICE_ID = "templator x";
+var EMAILJS_TEMPLATE_ID = "template_bsay8q3";
+var YOUR_EMAIL = "itharmarv@gmail.com";
 init(EMAILJS_USER_ID);
 var modal;
 function createFeedbackModal() {
@@ -24089,7 +24089,6 @@ function createFeedbackModal() {
           ></textarea>
         </div>
 
-        <!-- Optional attachments (URLs or identifiers) -->
         <div>
           <label class="block text-sm font-medium text-gray-700">
             Attachments (optional)
@@ -24111,11 +24110,17 @@ function createFeedbackModal() {
             Cancel
           </button>
 
+          <!-- Updated submit button with spinner -->
           <button
             type="submit"
-            class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+            id="submitFeedbackBtn"
+            class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2"
           >
-            Submit
+            <span id="submitText">Submit</span>
+            <svg id="spinner" class="hidden h-4 w-4 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
           </button>
         </div>
       </form>
@@ -24135,6 +24140,9 @@ function openFeedbackModal(type) {
   const severityWrapper = modal.querySelector("#severityWrapper");
   const severityInput = modal.querySelector("#feedbackSeverity");
   const attachmentsInput = modal.querySelector("#feedbackAttachments");
+  const submitBtn = modal.querySelector("#submitFeedbackBtn");
+  const submitText = modal.querySelector("#submitText");
+  const spinner = modal.querySelector("#spinner");
   typeInput.value = type;
   modalTitle.textContent = type === "suggestion" ? "Submit a Suggestion" : type === "bug" ? "Report a Bug" : "Submit Feedback";
   severityWrapper.classList.toggle("hidden", type !== "bug");
@@ -24142,6 +24150,9 @@ function openFeedbackModal(type) {
   cancelBtn.onclick = closeFeedbackModal;
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    submitBtn.disabled = true;
+    submitText.textContent = "Sending...";
+    spinner.classList.remove("hidden");
     const metadata = {
       userAgent: navigator.userAgent,
       platform: navigator.platform,
@@ -24168,6 +24179,10 @@ function openFeedbackModal(type) {
     } catch (err) {
       console.error("Feedback submission failed:", err);
       alert("Failed to submit feedback. Please try again later.");
+    } finally {
+      submitBtn.disabled = false;
+      submitText.textContent = "Submit";
+      spinner.classList.add("hidden");
     }
   });
 }
@@ -50991,6 +51006,63 @@ var hasPickedTemplate = false;
 var hasPickedData = false;
 var hasPickedOutput = false;
 var selectedFiles = /* @__PURE__ */ new Set();
+var isDragging = false;
+var dragStartIndex = -1;
+var dragEndIndex = -1;
+var currentFileItems = [];
+function handleMouseDown(e) {
+  if (e.button !== 0) return;
+  if (e.target.classList.contains("file-checkbox")) {
+    return;
+  }
+  const targetItem = e.target.closest(".output-file-item");
+  if (!targetItem) return;
+  isDragging = false;
+  dragStartIndex = parseInt(targetItem.dataset.index);
+  dragEndIndex = dragStartIndex;
+  e.preventDefault();
+}
+function handleMouseMove(e) {
+  if (isDragging === false && dragStartIndex !== -1) {
+    isDragging = true;
+    const startItem = currentFileItems[dragStartIndex];
+    const startCheckbox = startItem.querySelector(".file-checkbox");
+    if (startCheckbox) {
+      startCheckbox.checked = !startCheckbox.checked;
+      const path = startCheckbox.dataset.path;
+      if (startCheckbox.checked) {
+        selectedFiles.add(path);
+      } else {
+        selectedFiles.delete(path);
+      }
+      updateMultiDeleteUI();
+    }
+  }
+  if (!isDragging) return;
+  const targetItem = e.target.closest(".output-file-item");
+  if (!targetItem) return;
+  const currentIndex = parseInt(targetItem.dataset.index);
+  if (currentIndex === dragEndIndex) return;
+  dragEndIndex = currentIndex;
+  const start = Math.min(dragStartIndex, dragEndIndex);
+  const end = Math.max(dragStartIndex, dragEndIndex);
+  for (let i = start; i <= end; i++) {
+    const item = currentFileItems[i];
+    const checkbox = item.querySelector(".file-checkbox");
+    if (checkbox) {
+      checkbox.checked = true;
+      selectedFiles.add(checkbox.dataset.path);
+    }
+  }
+  updateMultiDeleteUI();
+}
+function handleMouseUp() {
+  if (isDragging) {
+    isDragging = false;
+    dragStartIndex = -1;
+    dragEndIndex = -1;
+  }
+}
 function loadTemplateFromQuick(item) {
   templatePath = item.path;
   templateLabel.textContent = item.path;
@@ -51015,7 +51087,6 @@ function loadDataFromQuick(item) {
   const isCsv = dataPath.toLowerCase().endsWith(".csv");
   const isXlsx = dataPath.toLowerCase().endsWith(".xlsx");
   if (isCsv || isXlsx) {
-    console.log(dataPath);
     loadXlsxPreview(dataPath);
   } else {
     document.getElementById("dataPreview").innerHTML = "<em>Unsupported file type</em>";
@@ -51044,7 +51115,6 @@ if (outputDir) {
 updateUI();
 async function loadXlsxPreview(filePath) {
   try {
-    console.log("Work 1");
     const { invoke: invoke2 } = window.__TAURI__.core;
     const base64 = await invoke2("read_file_bytes", { path: filePath });
     const binaryString = atob(base64);
@@ -51053,9 +51123,7 @@ async function loadXlsxPreview(filePath) {
       uint8Array[i] = binaryString.charCodeAt(i);
     }
     const uint8 = uint8Array;
-    console.log("Work 1 after");
     if (filePath.toLowerCase().endsWith(".csv")) {
-      console.log("Work 2");
       const csv = new TextDecoder().decode(uint8);
       document.getElementById("dataPreview").innerHTML = csvToHtml(csv);
       const lines = csv.split("\n").filter((line) => line.trim());
@@ -51065,7 +51133,6 @@ async function loadXlsxPreview(filePath) {
         showColumnSelector();
       }
     } else {
-      console.log("Work 3");
       const wb = readSync(uint8, { type: "array" });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       document.getElementById("dataPreview").innerHTML = utils.sheet_to_html(sheet, { editable: false });
@@ -51095,7 +51162,6 @@ document.getElementById("pickTemplate").addEventListener("click", async () => {
     await loadDocxPreview(path);
     previewCard.classList.remove("hidden");
     addToQuickBtn.classList.remove("hidden");
-  } else {
   }
   updateUI();
 });
@@ -51229,7 +51295,7 @@ async function loadOutputFolderContents(folderPath) {
       const fullPath = `${folderPath}/${file}`.replace(/\\/g, "/");
       const isChecked = selectedFiles.has(fullPath) ? "checked" : "";
       return `
-          <div class="flex items-center gap-2 py-1 border-b border-gray-100">
+          <div class="output-file-item flex items-center gap-2 py-1 border-b border-gray-100">
             <input type="checkbox" class="mr-2 file-checkbox" data-path="${escapeHtml(fullPath)}" ${isChecked}>
             <button class="flex items-center gap-2 flex-1 text-left truncate hover:bg-gray-50 rounded px-1"
                     data-action="preview" data-path="${escapeHtml(fullPath)}">
@@ -51245,8 +51311,16 @@ async function loadOutputFolderContents(folderPath) {
           </div>
         `;
     }).join("");
+    const selectAllCheckbox = document.getElementById("selectAllCheckbox");
+    if (selectAllCheckbox) {
+      const allFiles = Array.from(document.querySelectorAll(".file-checkbox")).map((cb2) => cb2.dataset.path);
+      const allSelected = allFiles.length > 0 && allFiles.every((p) => selectedFiles.has(p));
+      selectAllCheckbox.checked = allSelected;
+      selectAllCheckbox.indeterminate = !allSelected && selectedFiles.size > 0;
+    }
     attachOutputFileEventListeners(folderPath);
     attachCheckboxListeners(folderPath);
+    enableDragSelect(contentsContainer);
     updateMultiDeleteUI();
   } catch (err) {
     console.error("Failed to load folder contents:", err);
@@ -51273,22 +51347,13 @@ function attachCheckboxListeners(baseFolderPath) {
 }
 function updateMultiDeleteUI() {
   const count = selectedFiles.size;
-  const deleteBtn = document.getElementById("deleteSelectedBtn");
-  const countEl = document.getElementById("selectedCount");
-  if (countEl) countEl.textContent = count;
-  if (deleteBtn) {
-    deleteBtn.classList.toggle("hidden", count === 0);
+  const controlsContainer = document.getElementById("multiDeleteControls");
+  if (controlsContainer) {
+    controlsContainer.classList.toggle("hidden", count === 0);
+    const countEl = document.getElementById("selectedCount");
+    if (countEl) countEl.textContent = count;
   }
 }
-document.getElementById("toggleSelectMode")?.addEventListener("click", () => {
-  isSelectMode = !isSelectMode;
-  if (!isSelectMode) {
-    selectedFiles.clear();
-  }
-  if (outputDir) {
-    loadOutputFolderContents(outputDir);
-  }
-});
 document.getElementById("deleteSelectedBtn")?.addEventListener("click", async () => {
   if (selectedFiles.size === 0) return;
   const confirmed = await showConfirm(
@@ -51450,10 +51515,43 @@ document.getElementById("nameColumnSelect")?.addEventListener("change", (e) => {
 });
 document.getElementById("reportBugBtn").addEventListener("click", () => openFeedbackModal("bug"));
 document.getElementById("suggestBtn").addEventListener("click", () => openFeedbackModal("suggestion"));
+document.getElementById("cancelSelectionBtn")?.addEventListener("click", () => {
+  selectedFiles.clear();
+  if (outputDir) {
+    loadOutputFolderContents(outputDir);
+  }
+});
+document.getElementById("selectAllCheckbox")?.addEventListener("change", (e) => {
+  const isChecked = e.target.checked;
+  const checkboxes = document.querySelectorAll(".file-checkbox");
+  checkboxes.forEach((checkbox) => {
+    checkbox.checked = isChecked;
+    const path = checkbox.dataset.path;
+    if (isChecked) {
+      selectedFiles.add(path);
+    } else {
+      selectedFiles.delete(path);
+    }
+  });
+  updateMultiDeleteUI();
+});
+function enableDragSelect(container) {
+  container.removeEventListener("mousedown", handleMouseDown);
+  container.removeEventListener("mousemove", handleMouseMove);
+  container.removeEventListener("mouseup", handleMouseUp);
+  document.removeEventListener("mouseup", handleMouseUp);
+  currentFileItems = Array.from(container.querySelectorAll(".output-file-item"));
+  if (currentFileItems.length === 0) return;
+  currentFileItems.forEach((item, index) => {
+    item.dataset.index = index;
+  });
+  container.addEventListener("mousedown", handleMouseDown);
+  container.addEventListener("mousemove", handleMouseMove);
+  container.addEventListener("mouseup", handleMouseUp);
+  document.addEventListener("mouseup", handleMouseUp);
+}
 document.addEventListener("DOMContentLoaded", () => {
   const savedOutput = localStorage.getItem("lastOutputDir");
-  if (savedOutput) {
-  }
   updateUI();
   renderQuickTemplates(quickCallbacks);
 });

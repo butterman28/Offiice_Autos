@@ -1,26 +1,25 @@
 // ./assets/components/feedback.js
 
-// ✅ CONFIG — Replace these with your EmailJS values
-const EMAILJS_USER_ID = "YOUR_EMAILJS_USER_ID";        // e.g. "user_xxxxxx"
-const EMAILJS_SERVICE_ID = "YOUR_EMAILJS_SERVICE_ID";  // e.g. "service_gmail"
-const EMAILJS_TEMPLATE_ID = "YOUR_EMAILJS_TEMPLATE_ID"; // e.g. "template_feedback"
-const YOUR_EMAIL = "youremail@gmail.com";             // 👈 where feedback goes
+// CONFIG — Replace these with your EmailJS values
+//unsafe for now i know please don't abuse it till find a solution 
+// which we do but i have to find actual work so.....
+const EMAILJS_USER_ID = "attaI75BX2I65OjNW";
+const EMAILJS_SERVICE_ID = "templator x";
+const EMAILJS_TEMPLATE_ID = "template_bsay8q3";
+const YOUR_EMAIL = "itharmarv@gmail.com";
 
-// ✅ Use the NEW official package
 import { init as emailjsInit, send as emailjsSend } from '@emailjs/browser';
-
-// Initialize once
 emailjsInit(EMAILJS_USER_ID);
 
 let modal;
 
-// 👇 Keep your existing createFeedbackModal() exactly as-is
 export function createFeedbackModal() {
   const wrapper = document.createElement("div");
   wrapper.id = "feedbackModal";
   wrapper.className =
     "fixed inset-0 bg-black/50 flex items-center justify-center z-50";
 
+  //  Added loading state placeholder
   wrapper.innerHTML = `
     <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
       <h2 id="feedbackTitle" class="text-lg font-semibold mb-4">
@@ -65,7 +64,6 @@ export function createFeedbackModal() {
           ></textarea>
         </div>
 
-        <!-- Optional attachments (URLs or identifiers) -->
         <div>
           <label class="block text-sm font-medium text-gray-700">
             Attachments (optional)
@@ -87,11 +85,17 @@ export function createFeedbackModal() {
             Cancel
           </button>
 
+          <!-- Updated submit button with spinner -->
           <button
             type="submit"
-            class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+            id="submitFeedbackBtn"
+            class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2"
           >
-            Submit
+            <span id="submitText">Submit</span>
+            <svg id="spinner" class="hidden h-4 w-4 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
           </button>
         </div>
       </form>
@@ -102,7 +106,6 @@ export function createFeedbackModal() {
   return wrapper;
 }
 
-// 👇 Keep your openFeedbackModal() structure — only change the submit handler
 export function openFeedbackModal(type) {
   modal = createFeedbackModal();
 
@@ -115,6 +118,9 @@ export function openFeedbackModal(type) {
   const severityWrapper = modal.querySelector("#severityWrapper");
   const severityInput = modal.querySelector("#feedbackSeverity");
   const attachmentsInput = modal.querySelector("#feedbackAttachments");
+  const submitBtn = modal.querySelector("#submitFeedbackBtn");
+  const submitText = modal.querySelector("#submitText");
+  const spinner = modal.querySelector("#spinner");
 
   typeInput.value = type;
 
@@ -136,9 +142,13 @@ export function openFeedbackModal(type) {
 
   cancelBtn.onclick = closeFeedbackModal;
 
-  // ✅ ONLY THIS PART CHANGES: replace Supabase with EmailJS
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    //Disable form & show spinner
+    submitBtn.disabled = true;
+    submitText.textContent = "Sending...";
+    spinner.classList.remove("hidden");
 
     const metadata = {
       userAgent: navigator.userAgent,
@@ -151,7 +161,6 @@ export function openFeedbackModal(type) {
       timestamp: new Date().toISOString()
     };
 
-    // ✅ Prepare email content (preserve your structure)
     const emailData = {
       to_email: YOUR_EMAIL,
       feedback_type: type,
@@ -161,7 +170,6 @@ export function openFeedbackModal(type) {
     };
 
     try {
-      // ✅ Send via EmailJS (no Supabase!)
       await emailjsSend(
         EMAILJS_SERVICE_ID,
         EMAILJS_TEMPLATE_ID,
@@ -174,6 +182,11 @@ export function openFeedbackModal(type) {
     } catch (err) {
       console.error("Feedback submission failed:", err);
       alert("Failed to submit feedback. Please try again later.");
+    } finally {
+      // Re-enable button & hide spinner
+      submitBtn.disabled = false;
+      submitText.textContent = "Submit";
+      spinner.classList.add("hidden");
     }
   });
 }
