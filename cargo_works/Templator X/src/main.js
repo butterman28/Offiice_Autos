@@ -2,6 +2,7 @@
 import { showModalPrompt, showConfirm,showSnackbar } from "./assets/components/modal.js";
 import { csvToHtml,parseCsvLine,escapeHtml } from "./assets/components/csv2html.js";
 import { loadDocxPreview, renderQuickTemplates } from "./assets/components/docx_handler.js";
+import { openFeedbackModal } from "./assets/components/feedback.js";
 import {
   addQuickTemplate,
   addQuickData,
@@ -25,7 +26,7 @@ let availableColumns = []; // ← NEW STATE
 let hasPickedTemplate = false;
 let hasPickedData = false;
 let hasPickedOutput = false;
-
+let selectedFiles = new Set();
 
 function loadTemplateFromQuick(item) {
   templatePath = item.path;
@@ -314,39 +315,123 @@ async function loadOutputFolderContents(folderPath) {
 
     if (files.length === 0) {
       contentsContainer.innerHTML = '<div class="text-gray-500 italic">Empty folder</div>';
-    } else {
-      contentsContainer.innerHTML = files
-        .map(file => {
-          const safeFile = escapeHtml(file);
-          const fullPath = `${folderPath}/${file}`.replace(/\\/g, '/'); // Normalize path
-          return `
-            <div class="flex items-center justify-between gap-2 py-1 border-b border-gray-100">
-              <button class="flex items-center gap-2 flex-1 text-left truncate hover:bg-gray-50 rounded px-1"
-                      data-action="preview" data-path="${escapeHtml(fullPath)}">
-                <span class="text-blue-600">📄</span>
-                <span class="truncate">${safeFile}</span>
-              </button>
-                 <button class="ml-auto text-red-500 hover:text-red-700 transition-colors"
-                        data-action="delete" data-path="${escapeHtml(fullPath)}" data-name="${safeFile}">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-            </div>
-          `;
-        })
-        .join('');
+      updateMultiDeleteUI();
+      return;
     }
-    // Attach delegated event listeners
+
+    // ALWAYS render checkboxes
+    contentsContainer.innerHTML = files
+      .map(file => {
+        const safeFile = escapeHtml(file);
+        const fullPath = `${folderPath}/${file}`.replace(/\\/g, '/');
+        const isChecked = selectedFiles.has(fullPath) ? 'checked' : '';
+
+        return `
+          <div class="flex items-center gap-2 py-1 border-b border-gray-100">
+            <input type="checkbox" class="mr-2 file-checkbox" data-path="${escapeHtml(fullPath)}" ${isChecked}>
+            <button class="flex items-center gap-2 flex-1 text-left truncate hover:bg-gray-50 rounded px-1"
+                    data-action="preview" data-path="${escapeHtml(fullPath)}">
+              <span class="text-blue-600">📄</span>
+              <span class="truncate">${safeFile}</span>
+            </button>
+            <button class="ml-auto text-red-500 hover:text-red-700 transition-colors"
+                    data-action="delete" data-path="${escapeHtml(fullPath)}" data-name="${safeFile}">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        `;
+      })
+      .join('');
+
     attachOutputFileEventListeners(folderPath);
+    attachCheckboxListeners(folderPath);
+    updateMultiDeleteUI();
   } catch (err) {
     console.error("Failed to load folder contents:", err);
     const contentsContainer = document.getElementById("outputFolderContents");
     if (contentsContainer) {
       contentsContainer.innerHTML = '<div class="text-red-500 text-sm">Could not read folder</div>';
     }
+    updateMultiDeleteUI();
   }
 }
+
+//checkbox logic and stuff 
+
+function attachCheckboxListeners(baseFolderPath) {
+  const checkboxes = document.querySelectorAll('.file-checkbox');
+  checkboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', (e) => {
+      const path = e.target.dataset.path;
+      if (e.target.checked) {
+        selectedFiles.add(path);
+      } else {
+        selectedFiles.delete(path);
+      }
+      updateMultiDeleteUI();
+    });
+  });
+}
+
+function updateMultiDeleteUI() {
+  const count = selectedFiles.size;
+  const deleteBtn = document.getElementById("deleteSelectedBtn");
+  const countEl = document.getElementById("selectedCount");
+
+  if (countEl) countEl.textContent = count;
+  if (deleteBtn) {
+    deleteBtn.classList.toggle("hidden", count === 0);
+  }
+}
+
+// Toggle select mode
+document.getElementById("toggleSelectMode")?.addEventListener("click", () => {
+  isSelectMode = !isSelectMode;
+  if (!isSelectMode) {
+    selectedFiles.clear();
+  }
+  if (outputDir) {
+    loadOutputFolderContents(outputDir); // re-render with/without checkboxes
+  }
+});
+
+// Delete selected files
+document.getElementById("deleteSelectedBtn")?.addEventListener("click", async () => {
+  if (selectedFiles.size === 0) return;
+
+  const confirmed = await showConfirm(
+    `Delete ${selectedFiles.size} file(s)?`,
+    "This cannot be undone."
+  );
+
+  if (!confirmed) return;
+
+  let successCount = 0;
+  let errorCount = 0;
+
+  for (const filePath of selectedFiles) {
+    try {
+      await invoke('delete_file', { path: filePath });
+      successCount++;
+    } catch (err) {
+      console.error("Delete failed:", err);
+      errorCount++;
+    }
+  }
+
+  selectedFiles.clear();
+  if (outputDir) {
+    await loadOutputFolderContents(outputDir);
+  }
+
+  if (errorCount === 0) {
+    showSnackbar(`${successCount} file(s) deleted.`, "success");
+  } else {
+    showSnackbar(`${successCount} deleted, ${errorCount} failed.`, "warning");
+  }
+});
 
 function attachOutputFileEventListeners(baseFolderPath) {
   const container = document.getElementById("outputFolderContents");
@@ -530,9 +615,15 @@ function showColumnSelector() {
 document.getElementById("nameColumnSelect")?.addEventListener("change", (e) => {
   selectedNameColumn = e.target.value || null;
 });
+document
+  .getElementById("reportBugBtn")
+  .addEventListener("click", () => openFeedbackModal("bug"));
+
+document
+  .getElementById("suggestBtn")
+  .addEventListener("click", () => openFeedbackModal("suggestion"));
 
 // Initial render
-//  Wait for DOM to be ready before initializing anything
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize output from localStorage if it exists
   const savedOutput = localStorage.getItem("lastOutputDir");
@@ -544,10 +635,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load folder contents for saved output
     //loadOutputFolderContents(savedOutput);
   }
-  
   // Initial UI update
   updateUI();
-  
   // Render quick lists
   renderQuickTemplates(quickCallbacks);
 });

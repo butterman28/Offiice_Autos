@@ -23472,8 +23472,8 @@ function createModal() {
   return backdrop;
 }
 async function showConfirm(title, message) {
-  const modal = createModal();
-  modal.innerHTML = `
+  const modal2 = createModal();
+  modal2.innerHTML = `
     <div class="bg-white rounded-lg p-6 w-80 max-w-[90%] shadow-xl">
       <h3 class="text-sm font-medium text-gray-800 mb-2">${title}</h3>
       <p class="text-sm text-gray-600 mb-4">${message}</p>
@@ -23483,12 +23483,12 @@ async function showConfirm(title, message) {
       </div>
     </div>
   `;
-  const cancelBtn = modal.querySelector("#modalCancel");
-  const confirmBtn = modal.querySelector("#modalConfirm");
-  modal.classList.remove("hidden");
+  const cancelBtn = modal2.querySelector("#modalCancel");
+  const confirmBtn = modal2.querySelector("#modalConfirm");
+  modal2.classList.remove("hidden");
   return new Promise((resolve) => {
     const cleanup = () => {
-      modal.classList.add("hidden");
+      modal2.classList.add("hidden");
     };
     const onCancel = () => {
       cleanup();
@@ -23503,15 +23503,15 @@ async function showConfirm(title, message) {
     const onKey = (e) => {
       if (e.key === "Escape") onCancel();
     };
-    modal.onclick = (e) => {
-      if (e.target === modal) onCancel();
+    modal2.onclick = (e) => {
+      if (e.target === modal2) onCancel();
     };
     window.addEventListener("keydown", onKey, { once: true });
   });
 }
 async function showModalPrompt(title, defaultValue = "") {
-  const modal = createModal();
-  modal.innerHTML = `
+  const modal2 = createModal();
+  modal2.innerHTML = `
     <div class="bg-white rounded-lg p-6 w-80 max-w-[90%] shadow-xl">
       <h3 id="modalTitle" class="text-sm font-medium text-gray-800 mb-3">${title}</h3>
       <input
@@ -23527,15 +23527,15 @@ async function showModalPrompt(title, defaultValue = "") {
       </div>
     </div>
   `;
-  const inputEl = modal.querySelector("#modalInput");
-  const cancelBtn = modal.querySelector("#modalCancel");
-  const confirmBtn = modal.querySelector("#modalConfirm");
-  modal.classList.remove("hidden");
+  const inputEl = modal2.querySelector("#modalInput");
+  const cancelBtn = modal2.querySelector("#modalCancel");
+  const confirmBtn = modal2.querySelector("#modalConfirm");
+  modal2.classList.remove("hidden");
   inputEl.focus();
   inputEl.select();
   return new Promise((resolve) => {
     const cleanup = () => {
-      modal.classList.add("hidden");
+      modal2.classList.add("hidden");
     };
     const onCancel = () => {
       cleanup();
@@ -23552,8 +23552,8 @@ async function showModalPrompt(title, defaultValue = "") {
       if (e.key === "Enter") onConfirm();
       else if (e.key === "Escape") onCancel();
     };
-    modal.onclick = (e) => {
-      if (e.target === modal) onCancel();
+    modal2.onclick = (e) => {
+      if (e.target === modal2) onCancel();
     };
     inputEl.addEventListener("keydown", onKey, { once: true });
   });
@@ -23835,6 +23835,184 @@ function renderQuickTemplates({ onTemplateClick, onDataClick, onOutputClick }) {
   }
   if (pathFallback) {
     pathFallback.classList.toggle("hidden", hasAny);
+  }
+}
+
+// src/assets/components/feedback.js
+var SUPABASE_URL = "https://xjaisnfxdxvmsooapgys.supabase.co";
+var SUPABASE_ANON_KEY = "sb_publishable__6-EvDVzFrKxGJCz2srObA_AhWmxwuS";
+var modal;
+function createFeedbackModal() {
+  const wrapper = document.createElement("div");
+  wrapper.id = "feedbackModal";
+  wrapper.className = "fixed inset-0 bg-black/50 flex items-center justify-center z-50";
+  wrapper.innerHTML = `
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+      <h2 id="feedbackTitle" class="text-lg font-semibold mb-4">
+        Submit Feedback
+      </h2>
+
+      <form id="feedbackForm" class="space-y-4">
+        <input type="hidden" id="feedbackType" />
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Title</label>
+          <input
+            id="feedbackTitleInput"
+            type="text"
+            required
+            class="w-full mt-1 px-3 py-2 border rounded focus:outline-none focus:ring focus:ring-indigo-200"
+            placeholder="Short summary"
+          />
+        </div>
+
+        <!-- Bug severity (bugs only) -->
+        <div id="severityWrapper" class="hidden">
+          <label class="block text-sm font-medium text-gray-700">Severity</label>
+          <select
+            id="feedbackSeverity"
+            class="w-full mt-1 px-3 py-2 border rounded focus:outline-none focus:ring focus:ring-indigo-200"
+          >
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Details</label>
+          <textarea
+            id="feedbackBody"
+            required
+            rows="4"
+            class="w-full mt-1 px-3 py-2 border rounded focus:outline-none focus:ring focus:ring-indigo-200"
+          ></textarea>
+        </div>
+
+        <!-- Optional attachments (URLs or identifiers) -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700">
+            Attachments (optional)
+          </label>
+          <input
+            id="feedbackAttachments"
+            type="text"
+            class="w-full mt-1 px-3 py-2 border rounded focus:outline-none focus:ring focus:ring-indigo-200"
+            placeholder="Comma-separated URLs or IDs"
+          />
+        </div>
+
+        <div class="flex justify-end gap-2 pt-4">
+          <button
+            type="button"
+            id="cancelFeedback"
+            class="px-4 py-2 rounded bg-gray-100 hover:bg-gray-200"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+          >
+            Submit
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(wrapper);
+  return wrapper;
+}
+function openFeedbackModal(type) {
+  modal = createFeedbackModal();
+  const form = modal.querySelector("#feedbackForm");
+  const typeInput = modal.querySelector("#feedbackType");
+  const titleInput = modal.querySelector("#feedbackTitleInput");
+  const bodyInput = modal.querySelector("#feedbackBody");
+  const modalTitle = modal.querySelector("#feedbackTitle");
+  const cancelBtn = modal.querySelector("#cancelFeedback");
+  const severityWrapper = modal.querySelector("#severityWrapper");
+  const severityInput = modal.querySelector("#feedbackSeverity");
+  const attachmentsInput = modal.querySelector("#feedbackAttachments");
+  typeInput.value = type;
+  modalTitle.textContent = type === "suggestion" ? "Submit a Suggestion" : type === "bug" ? "Report a Bug" : "Submit Feedback";
+  severityWrapper.classList.toggle("hidden", type !== "bug");
+  bodyInput.placeholder = type === "bug" ? "Describe the issue, steps to reproduce, expected vs actual behavior" : type === "suggestion" ? "Describe your suggestion and its benefit" : "Describe your feedback";
+  cancelBtn.onclick = closeFeedbackModal;
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const metadata = {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      app: "filecanvas",
+      severity: type === "bug" ? severityInput.value : null,
+      attachments: attachmentsInput.value ? attachmentsInput.value.split(",").map((v) => v.trim()) : []
+    };
+    let rpc;
+    try {
+      rpc = getRpcConfig(typeInput.value);
+    } catch (err) {
+      alert(err.message);
+      return;
+    }
+    const payload = rpc.payload(
+      titleInput.value.trim(),
+      bodyInput.value.trim(),
+      metadata
+    );
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/rpc/${rpc.endpoint}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+      if (!res.ok) throw new Error(await res.text());
+      closeFeedbackModal();
+      alert("Thank you! Your feedback was submitted.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to submit feedback.");
+    }
+  });
+}
+function closeFeedbackModal() {
+  if (modal) {
+    modal.remove();
+    modal = null;
+  }
+}
+function getRpcConfig(type) {
+  switch (type) {
+    case "bug":
+      return {
+        endpoint: "submit_complaint",
+        payload: (title, body, metadata) => ({
+          p_title: title,
+          p_body: body,
+          p_type: "bug",
+          p_metadata: metadata
+        })
+      };
+    case "suggestion":
+      return {
+        endpoint: "submit_suggestion",
+        payload: (title, body, metadata) => ({
+          p_title: title,
+          p_suggestion: body,
+          p_metadata: metadata
+        })
+      };
+    default:
+      throw new Error(`Unsupported feedback type: ${type}`);
   }
 }
 
@@ -50650,6 +50828,7 @@ var availableColumns = [];
 var hasPickedTemplate = false;
 var hasPickedData = false;
 var hasPickedOutput = false;
+var selectedFiles = /* @__PURE__ */ new Set();
 function loadTemplateFromQuick(item) {
   templatePath = item.path;
   templateLabel.textContent = item.path;
@@ -50880,36 +51059,102 @@ async function loadOutputFolderContents(folderPath) {
     if (!contentsContainer) return;
     if (files.length === 0) {
       contentsContainer.innerHTML = '<div class="text-gray-500 italic">Empty folder</div>';
-    } else {
-      contentsContainer.innerHTML = files.map((file) => {
-        const safeFile = escapeHtml(file);
-        const fullPath = `${folderPath}/${file}`.replace(/\\/g, "/");
-        return `
-            <div class="flex items-center justify-between gap-2 py-1 border-b border-gray-100">
-              <button class="flex items-center gap-2 flex-1 text-left truncate hover:bg-gray-50 rounded px-1"
-                      data-action="preview" data-path="${escapeHtml(fullPath)}">
-                <span class="text-blue-600">\u{1F4C4}</span>
-                <span class="truncate">${safeFile}</span>
-              </button>
-                 <button class="ml-auto text-red-500 hover:text-red-700 transition-colors"
-                        data-action="delete" data-path="${escapeHtml(fullPath)}" data-name="${safeFile}">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-            </div>
-          `;
-      }).join("");
+      updateMultiDeleteUI();
+      return;
     }
+    contentsContainer.innerHTML = files.map((file) => {
+      const safeFile = escapeHtml(file);
+      const fullPath = `${folderPath}/${file}`.replace(/\\/g, "/");
+      const isChecked = selectedFiles.has(fullPath) ? "checked" : "";
+      return `
+          <div class="flex items-center gap-2 py-1 border-b border-gray-100">
+            <input type="checkbox" class="mr-2 file-checkbox" data-path="${escapeHtml(fullPath)}" ${isChecked}>
+            <button class="flex items-center gap-2 flex-1 text-left truncate hover:bg-gray-50 rounded px-1"
+                    data-action="preview" data-path="${escapeHtml(fullPath)}">
+              <span class="text-blue-600">\u{1F4C4}</span>
+              <span class="truncate">${safeFile}</span>
+            </button>
+            <button class="ml-auto text-red-500 hover:text-red-700 transition-colors"
+                    data-action="delete" data-path="${escapeHtml(fullPath)}" data-name="${safeFile}">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        `;
+    }).join("");
     attachOutputFileEventListeners(folderPath);
+    attachCheckboxListeners(folderPath);
+    updateMultiDeleteUI();
   } catch (err) {
     console.error("Failed to load folder contents:", err);
     const contentsContainer = document.getElementById("outputFolderContents");
     if (contentsContainer) {
       contentsContainer.innerHTML = '<div class="text-red-500 text-sm">Could not read folder</div>';
     }
+    updateMultiDeleteUI();
   }
 }
+function attachCheckboxListeners(baseFolderPath) {
+  const checkboxes = document.querySelectorAll(".file-checkbox");
+  checkboxes.forEach((checkbox) => {
+    checkbox.addEventListener("change", (e) => {
+      const path = e.target.dataset.path;
+      if (e.target.checked) {
+        selectedFiles.add(path);
+      } else {
+        selectedFiles.delete(path);
+      }
+      updateMultiDeleteUI();
+    });
+  });
+}
+function updateMultiDeleteUI() {
+  const count = selectedFiles.size;
+  const deleteBtn = document.getElementById("deleteSelectedBtn");
+  const countEl = document.getElementById("selectedCount");
+  if (countEl) countEl.textContent = count;
+  if (deleteBtn) {
+    deleteBtn.classList.toggle("hidden", count === 0);
+  }
+}
+document.getElementById("toggleSelectMode")?.addEventListener("click", () => {
+  isSelectMode = !isSelectMode;
+  if (!isSelectMode) {
+    selectedFiles.clear();
+  }
+  if (outputDir) {
+    loadOutputFolderContents(outputDir);
+  }
+});
+document.getElementById("deleteSelectedBtn")?.addEventListener("click", async () => {
+  if (selectedFiles.size === 0) return;
+  const confirmed = await showConfirm(
+    `Delete ${selectedFiles.size} file(s)?`,
+    "This cannot be undone."
+  );
+  if (!confirmed) return;
+  let successCount = 0;
+  let errorCount = 0;
+  for (const filePath of selectedFiles) {
+    try {
+      await invoke("delete_file", { path: filePath });
+      successCount++;
+    } catch (err) {
+      console.error("Delete failed:", err);
+      errorCount++;
+    }
+  }
+  selectedFiles.clear();
+  if (outputDir) {
+    await loadOutputFolderContents(outputDir);
+  }
+  if (errorCount === 0) {
+    showSnackbar(`${successCount} file(s) deleted.`, "success");
+  } else {
+    showSnackbar(`${successCount} deleted, ${errorCount} failed.`, "warning");
+  }
+});
 function attachOutputFileEventListeners(baseFolderPath) {
   const container = document.getElementById("outputFolderContents");
   if (!container) return;
@@ -50930,12 +51175,12 @@ function attachOutputFileEventListeners(baseFolderPath) {
 }
 async function previewFile(filePath) {
   const modalId = "filePreviewModal";
-  let modal = document.getElementById(modalId);
-  if (!modal) {
-    modal = document.createElement("div");
-    modal.id = modalId;
-    modal.className = "fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4";
-    modal.innerHTML = `
+  let modal2 = document.getElementById(modalId);
+  if (!modal2) {
+    modal2 = document.createElement("div");
+    modal2.id = modalId;
+    modal2.className = "fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4";
+    modal2.innerHTML = `
       <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         <div class="px-4 py-3 border-b flex justify-between items-center">
           <h3 class="font-semibold truncate">${escapeHtml(filePath.split("/").pop())}</h3>
@@ -50946,16 +51191,16 @@ async function previewFile(filePath) {
         </div>
       </div>
     `;
-    document.body.appendChild(modal);
+    document.body.appendChild(modal2);
   }
-  const closeBtn = modal.querySelector("#closePreviewBtn");
-  const contentEl = modal.querySelector("#previewContent");
+  const closeBtn = modal2.querySelector("#closePreviewBtn");
+  const contentEl = modal2.querySelector("#previewContent");
   const closeModal = () => {
-    if (modal.parentNode) modal.parentNode.removeChild(modal);
+    if (modal2.parentNode) modal2.parentNode.removeChild(modal2);
   };
   closeBtn.onclick = closeModal;
-  modal.onclick = (e) => {
-    if (e.target === modal) closeModal();
+  modal2.onclick = (e) => {
+    if (e.target === modal2) closeModal();
   };
   try {
     const extension = filePath.split(".").pop()?.toLowerCase();
@@ -51041,6 +51286,8 @@ function showColumnSelector() {
 document.getElementById("nameColumnSelect")?.addEventListener("change", (e) => {
   selectedNameColumn = e.target.value || null;
 });
+document.getElementById("reportBugBtn").addEventListener("click", () => openFeedbackModal("bug"));
+document.getElementById("suggestBtn").addEventListener("click", () => openFeedbackModal("suggestion"));
 document.addEventListener("DOMContentLoaded", () => {
   const savedOutput = localStorage.getItem("lastOutputDir");
   if (savedOutput) {
