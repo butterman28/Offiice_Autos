@@ -4018,7 +4018,7 @@ var require_promise_array = __commonJS({
       PromiseArray.prototype.promise = function() {
         return this._promise;
       };
-      PromiseArray.prototype._init = function init(_3, resolveValueIfEmpty) {
+      PromiseArray.prototype._init = function init2(_3, resolveValueIfEmpty) {
         var values2 = tryConvertToPromise(this._values, this._promise);
         if (values2 instanceof Promise2) {
           values2 = values2._target();
@@ -4028,7 +4028,7 @@ var require_promise_array = __commonJS({
           if ((bitField & 50397184) === 0) {
             this._promise._setAsyncGuaranteed();
             return values2._then(
-              init,
+              init2,
               this._reject,
               void 0,
               this,
@@ -15712,7 +15712,7 @@ var require_reader = __commonJS({
 var require_Utility = __commonJS({
   "node_modules/xmlbuilder/lib/Utility.js"(exports2, module2) {
     (function() {
-      var assign, getValue, isArray, isEmpty2, isFunction2, isObject3, isPlainObject, slice2 = [].slice, hasProp = {}.hasOwnProperty;
+      var assign, getValue2, isArray, isEmpty2, isFunction2, isObject3, isPlainObject, slice2 = [].slice, hasProp = {}.hasOwnProperty;
       assign = function() {
         var i, key, len, source, sources, target;
         target = arguments[0], sources = 2 <= arguments.length ? slice2.call(arguments, 1) : [];
@@ -15761,7 +15761,7 @@ var require_Utility = __commonJS({
         var ctor2, proto;
         return isObject3(val) && (proto = Object.getPrototypeOf(val)) && (ctor2 = proto.constructor) && typeof ctor2 === "function" && ctor2 instanceof ctor2 && Function.prototype.toString.call(ctor2) === Function.prototype.toString.call(Object);
       };
-      getValue = function(obj2) {
+      getValue2 = function(obj2) {
         if (isFunction2(obj2.valueOf)) {
           return obj2.valueOf();
         } else {
@@ -15774,7 +15774,7 @@ var require_Utility = __commonJS({
       module2.exports.isArray = isArray;
       module2.exports.isEmpty = isEmpty2;
       module2.exports.isPlainObject = isPlainObject;
-      module2.exports.getValue = getValue;
+      module2.exports.getValue = getValue2;
     }).call(exports2);
   }
 });
@@ -15822,7 +15822,7 @@ var require_XMLAttribute = __commonJS({
 var require_XMLElement = __commonJS({
   "node_modules/xmlbuilder/lib/XMLElement.js"(exports2, module2) {
     (function() {
-      var XMLAttribute, XMLElement, XMLNode, getValue, isFunction2, isObject3, ref, extend = function(child, parent) {
+      var XMLAttribute, XMLElement, XMLNode, getValue2, isFunction2, isObject3, ref, extend = function(child, parent) {
         for (var key in parent) {
           if (hasProp.call(parent, key)) child[key] = parent[key];
         }
@@ -15834,7 +15834,7 @@ var require_XMLElement = __commonJS({
         child.__super__ = parent.prototype;
         return child;
       }, hasProp = {}.hasOwnProperty;
-      ref = require_Utility(), isObject3 = ref.isObject, isFunction2 = ref.isFunction, getValue = ref.getValue;
+      ref = require_Utility(), isObject3 = ref.isObject, isFunction2 = ref.isFunction, getValue2 = ref.getValue;
       XMLNode = require_XMLNode();
       XMLAttribute = require_XMLAttribute();
       module2.exports = XMLElement = (function(superClass) {
@@ -15880,7 +15880,7 @@ var require_XMLElement = __commonJS({
         XMLElement2.prototype.attribute = function(name, value) {
           var attName, attValue;
           if (name != null) {
-            name = getValue(name);
+            name = getValue2(name);
           }
           if (isObject3(name)) {
             for (attName in name) {
@@ -15903,7 +15903,7 @@ var require_XMLElement = __commonJS({
           if (name == null) {
             throw new Error("Missing attribute name. " + this.debugInfo());
           }
-          name = getValue(name);
+          name = getValue2(name);
           if (Array.isArray(name)) {
             for (i = 0, len = name.length; i < len; i++) {
               attName = name[i];
@@ -16511,8 +16511,8 @@ var require_XMLDummy = __commonJS({
 var require_XMLNode = __commonJS({
   "node_modules/xmlbuilder/lib/XMLNode.js"(exports2, module2) {
     (function() {
-      var XMLCData, XMLComment, XMLDeclaration, XMLDocType, XMLDummy, XMLElement, XMLNode, XMLProcessingInstruction, XMLRaw, XMLText, getValue, isEmpty2, isFunction2, isObject3, ref, hasProp = {}.hasOwnProperty;
-      ref = require_Utility(), isObject3 = ref.isObject, isFunction2 = ref.isFunction, isEmpty2 = ref.isEmpty, getValue = ref.getValue;
+      var XMLCData, XMLComment, XMLDeclaration, XMLDocType, XMLDummy, XMLElement, XMLNode, XMLProcessingInstruction, XMLRaw, XMLText, getValue2, isEmpty2, isFunction2, isObject3, ref, hasProp = {}.hasOwnProperty;
+      ref = require_Utility(), isObject3 = ref.isObject, isFunction2 = ref.isFunction, isEmpty2 = ref.isEmpty, getValue2 = ref.getValue;
       XMLElement = null;
       XMLCData = null;
       XMLComment = null;
@@ -16551,12 +16551,12 @@ var require_XMLNode = __commonJS({
           if (attributes == null) {
             attributes = {};
           }
-          attributes = getValue(attributes);
+          attributes = getValue2(attributes);
           if (!isObject3(attributes)) {
             ref2 = [attributes, text], text = ref2[0], attributes = ref2[1];
           }
           if (name != null) {
-            name = getValue(name);
+            name = getValue2(name);
           }
           if (Array.isArray(name)) {
             for (j = 0, len = name.length; j < len; j++) {
@@ -16647,10 +16647,10 @@ var require_XMLNode = __commonJS({
         XMLNode2.prototype.node = function(name, attributes, text) {
           var child, ref1;
           if (name != null) {
-            name = getValue(name);
+            name = getValue2(name);
           }
           attributes || (attributes = {});
-          attributes = getValue(attributes);
+          attributes = getValue2(attributes);
           if (!isObject3(attributes)) {
             ref1 = [attributes, text], text = ref1[0], attributes = ref1[1];
           }
@@ -16710,10 +16710,10 @@ var require_XMLNode = __commonJS({
         XMLNode2.prototype.instruction = function(target, value) {
           var insTarget, insValue, instruction, j, len;
           if (target != null) {
-            target = getValue(target);
+            target = getValue2(target);
           }
           if (value != null) {
-            value = getValue(value);
+            value = getValue2(value);
           }
           if (Array.isArray(target)) {
             for (j = 0, len = target.length; j < len; j++) {
@@ -17523,8 +17523,8 @@ var require_XMLDocument = __commonJS({
 var require_XMLDocumentCB = __commonJS({
   "node_modules/xmlbuilder/lib/XMLDocumentCB.js"(exports2, module2) {
     (function() {
-      var XMLAttribute, XMLCData, XMLComment, XMLDTDAttList, XMLDTDElement, XMLDTDEntity, XMLDTDNotation, XMLDeclaration, XMLDocType, XMLDocumentCB, XMLElement, XMLProcessingInstruction, XMLRaw, XMLStringWriter, XMLStringifier, XMLText, getValue, isFunction2, isObject3, isPlainObject, ref, hasProp = {}.hasOwnProperty;
-      ref = require_Utility(), isObject3 = ref.isObject, isFunction2 = ref.isFunction, isPlainObject = ref.isPlainObject, getValue = ref.getValue;
+      var XMLAttribute, XMLCData, XMLComment, XMLDTDAttList, XMLDTDElement, XMLDTDEntity, XMLDTDNotation, XMLDeclaration, XMLDocType, XMLDocumentCB, XMLElement, XMLProcessingInstruction, XMLRaw, XMLStringWriter, XMLStringifier, XMLText, getValue2, isFunction2, isObject3, isPlainObject, ref, hasProp = {}.hasOwnProperty;
+      ref = require_Utility(), isObject3 = ref.isObject, isFunction2 = ref.isFunction, isPlainObject = ref.isPlainObject, getValue2 = ref.getValue;
       XMLElement = require_XMLElement();
       XMLCData = require_XMLCData();
       XMLComment = require_XMLComment();
@@ -17574,14 +17574,14 @@ var require_XMLDocumentCB = __commonJS({
             throw new Error("Document can only have one root node. " + this.debugInfo(name));
           }
           this.openCurrent();
-          name = getValue(name);
+          name = getValue2(name);
           if (attributes === null && text == null) {
             ref1 = [{}, null], attributes = ref1[0], text = ref1[1];
           }
           if (attributes == null) {
             attributes = {};
           }
-          attributes = getValue(attributes);
+          attributes = getValue2(attributes);
           if (!isObject3(attributes)) {
             ref2 = [attributes, text], text = ref2[0], attributes = ref2[1];
           }
@@ -17607,7 +17607,7 @@ var require_XMLDocumentCB = __commonJS({
             throw new Error("att() can only be used immediately after an ele() call in callback mode. " + this.debugInfo(name));
           }
           if (name != null) {
-            name = getValue(name);
+            name = getValue2(name);
           }
           if (isObject3(name)) {
             for (attName in name) {
@@ -17657,10 +17657,10 @@ var require_XMLDocumentCB = __commonJS({
           var i, insTarget, insValue, len, node;
           this.openCurrent();
           if (target != null) {
-            target = getValue(target);
+            target = getValue2(target);
           }
           if (value != null) {
-            value = getValue(value);
+            value = getValue2(value);
           }
           if (Array.isArray(target)) {
             for (i = 0, len = target.length; i < len; i++) {
@@ -23838,9 +23838,208 @@ function renderQuickTemplates({ onTemplateClick, onDataClick, onOutputClick }) {
   }
 }
 
+// node_modules/@emailjs/browser/es/models/EmailJSResponseStatus.js
+var EmailJSResponseStatus = class {
+  constructor(_status = 0, _text = "Network Error") {
+    this.status = _status;
+    this.text = _text;
+  }
+};
+
+// node_modules/@emailjs/browser/es/utils/createWebStorage/createWebStorage.js
+var createWebStorage = () => {
+  if (typeof localStorage === "undefined")
+    return;
+  return {
+    get: (key) => Promise.resolve(localStorage.getItem(key)),
+    set: (key, value) => Promise.resolve(localStorage.setItem(key, value)),
+    remove: (key) => Promise.resolve(localStorage.removeItem(key))
+  };
+};
+
+// node_modules/@emailjs/browser/es/store/store.js
+var store = {
+  origin: "https://api.emailjs.com",
+  blockHeadless: false,
+  storageProvider: createWebStorage()
+};
+
+// node_modules/@emailjs/browser/es/utils/buildOptions/buildOptions.js
+var buildOptions = (options) => {
+  if (!options)
+    return {};
+  if (typeof options === "string") {
+    return {
+      publicKey: options
+    };
+  }
+  if (options.toString() === "[object Object]") {
+    return options;
+  }
+  return {};
+};
+
+// node_modules/@emailjs/browser/es/methods/init/init.js
+var init = (options, origin = "https://api.emailjs.com") => {
+  if (!options)
+    return;
+  const opts = buildOptions(options);
+  store.publicKey = opts.publicKey;
+  store.blockHeadless = opts.blockHeadless;
+  store.storageProvider = opts.storageProvider;
+  store.blockList = opts.blockList;
+  store.limitRate = opts.limitRate;
+  store.origin = opts.origin || origin;
+};
+
+// node_modules/@emailjs/browser/es/api/sendPost.js
+var sendPost = async (url, data, headers = {}) => {
+  const response = await fetch(store.origin + url, {
+    method: "POST",
+    headers,
+    body: data
+  });
+  const message = await response.text();
+  const responseStatus = new EmailJSResponseStatus(response.status, message);
+  if (response.ok) {
+    return responseStatus;
+  }
+  throw responseStatus;
+};
+
+// node_modules/@emailjs/browser/es/utils/validateParams/validateParams.js
+var validateParams = (publicKey, serviceID, templateID) => {
+  if (!publicKey || typeof publicKey !== "string") {
+    throw "The public key is required. Visit https://dashboard.emailjs.com/admin/account";
+  }
+  if (!serviceID || typeof serviceID !== "string") {
+    throw "The service ID is required. Visit https://dashboard.emailjs.com/admin";
+  }
+  if (!templateID || typeof templateID !== "string") {
+    throw "The template ID is required. Visit https://dashboard.emailjs.com/admin/templates";
+  }
+};
+
+// node_modules/@emailjs/browser/es/utils/validateTemplateParams/validateTemplateParams.js
+var validateTemplateParams = (templateParams) => {
+  if (templateParams && templateParams.toString() !== "[object Object]") {
+    throw "The template params have to be the object. Visit https://www.emailjs.com/docs/sdk/send/";
+  }
+};
+
+// node_modules/@emailjs/browser/es/utils/isHeadless/isHeadless.js
+var isHeadless = (navigator2) => {
+  return navigator2.webdriver || !navigator2.languages || navigator2.languages.length === 0;
+};
+
+// node_modules/@emailjs/browser/es/errors/headlessError/headlessError.js
+var headlessError = () => {
+  return new EmailJSResponseStatus(451, "Unavailable For Headless Browser");
+};
+
+// node_modules/@emailjs/browser/es/utils/validateBlockListParams/validateBlockListParams.js
+var validateBlockListParams = (list, watchVariable) => {
+  if (!Array.isArray(list)) {
+    throw "The BlockList list has to be an array";
+  }
+  if (typeof watchVariable !== "string") {
+    throw "The BlockList watchVariable has to be a string";
+  }
+};
+
+// node_modules/@emailjs/browser/es/utils/isBlockedValueInParams/isBlockedValueInParams.js
+var isBlockListDisabled = (options) => {
+  return !options.list?.length || !options.watchVariable;
+};
+var getValue = (data, name) => {
+  return data instanceof FormData ? data.get(name) : data[name];
+};
+var isBlockedValueInParams = (options, params) => {
+  if (isBlockListDisabled(options))
+    return false;
+  validateBlockListParams(options.list, options.watchVariable);
+  const value = getValue(params, options.watchVariable);
+  if (typeof value !== "string")
+    return false;
+  return options.list.includes(value);
+};
+
+// node_modules/@emailjs/browser/es/errors/blockedEmailError/blockedEmailError.js
+var blockedEmailError = () => {
+  return new EmailJSResponseStatus(403, "Forbidden");
+};
+
+// node_modules/@emailjs/browser/es/utils/validateLimitRateParams/validateLimitRateParams.js
+var validateLimitRateParams = (throttle2, id) => {
+  if (typeof throttle2 !== "number" || throttle2 < 0) {
+    throw "The LimitRate throttle has to be a positive number";
+  }
+  if (id && typeof id !== "string") {
+    throw "The LimitRate ID has to be a non-empty string";
+  }
+};
+
+// node_modules/@emailjs/browser/es/utils/isLimitRateHit/isLimitRateHit.js
+var getLeftTime = async (id, throttle2, storage) => {
+  const lastTime = Number(await storage.get(id) || 0);
+  return throttle2 - Date.now() + lastTime;
+};
+var isLimitRateHit = async (defaultID, options, storage) => {
+  if (!options.throttle || !storage) {
+    return false;
+  }
+  validateLimitRateParams(options.throttle, options.id);
+  const id = options.id || defaultID;
+  const leftTime = await getLeftTime(id, options.throttle, storage);
+  if (leftTime > 0) {
+    return true;
+  }
+  await storage.set(id, Date.now().toString());
+  return false;
+};
+
+// node_modules/@emailjs/browser/es/errors/limitRateError/limitRateError.js
+var limitRateError = () => {
+  return new EmailJSResponseStatus(429, "Too Many Requests");
+};
+
+// node_modules/@emailjs/browser/es/methods/send/send.js
+var send = async (serviceID, templateID, templateParams, options) => {
+  const opts = buildOptions(options);
+  const publicKey = opts.publicKey || store.publicKey;
+  const blockHeadless = opts.blockHeadless || store.blockHeadless;
+  const storageProvider = opts.storageProvider || store.storageProvider;
+  const blockList = { ...store.blockList, ...opts.blockList };
+  const limitRate = { ...store.limitRate, ...opts.limitRate };
+  if (blockHeadless && isHeadless(navigator)) {
+    return Promise.reject(headlessError());
+  }
+  validateParams(publicKey, serviceID, templateID);
+  validateTemplateParams(templateParams);
+  if (templateParams && isBlockedValueInParams(blockList, templateParams)) {
+    return Promise.reject(blockedEmailError());
+  }
+  if (await isLimitRateHit(location.pathname, limitRate, storageProvider)) {
+    return Promise.reject(limitRateError());
+  }
+  const params = {
+    lib_version: "4.4.1",
+    user_id: publicKey,
+    service_id: serviceID,
+    template_id: templateID,
+    template_params: templateParams
+  };
+  return sendPost("/api/v1.0/email/send", JSON.stringify(params), {
+    "Content-type": "application/json"
+  });
+};
+
 // src/assets/components/feedback.js
-var SUPABASE_URL = "https://xjaisnfxdxvmsooapgys.supabase.co";
-var SUPABASE_ANON_KEY = "sb_publishable__6-EvDVzFrKxGJCz2srObA_AhWmxwuS";
+var EMAILJS_USER_ID = "YOUR_EMAILJS_USER_ID";
+var EMAILJS_SERVICE_ID = "YOUR_EMAILJS_SERVICE_ID";
+var EMAILJS_TEMPLATE_ID = "YOUR_EMAILJS_TEMPLATE_ID";
+var YOUR_EMAIL = "youremail@gmail.com";
+init(EMAILJS_USER_ID);
 var modal;
 function createFeedbackModal() {
   const wrapper = document.createElement("div");
@@ -23946,41 +24145,29 @@ function openFeedbackModal(type) {
     const metadata = {
       userAgent: navigator.userAgent,
       platform: navigator.platform,
-      app: "filecanvas",
+      app: "TemplatorX",
       severity: type === "bug" ? severityInput.value : null,
-      attachments: attachmentsInput.value ? attachmentsInput.value.split(",").map((v) => v.trim()) : []
+      attachments: attachmentsInput.value ? attachmentsInput.value.split(",").map((v) => v.trim()) : [],
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
     };
-    let rpc;
+    const emailData = {
+      to_email: YOUR_EMAIL,
+      feedback_type: type,
+      title: titleInput.value.trim(),
+      message: bodyInput.value.trim(),
+      metadata: JSON.stringify(metadata, null, 2)
+    };
     try {
-      rpc = getRpcConfig(typeInput.value);
-    } catch (err) {
-      alert(err.message);
-      return;
-    }
-    const payload = rpc.payload(
-      titleInput.value.trim(),
-      bodyInput.value.trim(),
-      metadata
-    );
-    try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/rpc/${rpc.endpoint}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`
-          },
-          body: JSON.stringify(payload)
-        }
+      await send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        emailData
       );
-      if (!res.ok) throw new Error(await res.text());
       closeFeedbackModal();
       alert("Thank you! Your feedback was submitted.");
     } catch (err) {
-      console.error(err);
-      alert("Failed to submit feedback.");
+      console.error("Feedback submission failed:", err);
+      alert("Failed to submit feedback. Please try again later.");
     }
   });
 }
@@ -23988,31 +24175,6 @@ function closeFeedbackModal() {
   if (modal) {
     modal.remove();
     modal = null;
-  }
-}
-function getRpcConfig(type) {
-  switch (type) {
-    case "bug":
-      return {
-        endpoint: "submit_complaint",
-        payload: (title, body, metadata) => ({
-          p_title: title,
-          p_body: body,
-          p_type: "bug",
-          p_metadata: metadata
-        })
-      };
-    case "suggestion":
-      return {
-        endpoint: "submit_suggestion",
-        payload: (title, body, metadata) => ({
-          p_title: title,
-          p_suggestion: body,
-          p_metadata: metadata
-        })
-      };
-    default:
-      throw new Error(`Unsupported feedback type: ${type}`);
   }
 }
 
@@ -49782,10 +49944,10 @@ function parse_TST_TableModelArchive(M, root2, ws) {
   if (range2.e.c < 0)
     throw new Error("Invalid col varint ".concat(pb[7][0].data));
   ws["!ref"] = encode_range(range2);
-  var store = parse_shallow(pb[4][0].data);
-  var sst = parse_TST_TableDataList(M, M[parse_TSP_Reference(store[4][0].data)][0]);
-  var rsst = ((_a = store[17]) == null ? void 0 : _a[0]) ? parse_TST_TableDataList(M, M[parse_TSP_Reference(store[17][0].data)][0]) : [];
-  var tile = parse_shallow(store[3][0].data);
+  var store2 = parse_shallow(pb[4][0].data);
+  var sst = parse_TST_TableDataList(M, M[parse_TSP_Reference(store2[4][0].data)][0]);
+  var rsst = ((_a = store2[17]) == null ? void 0 : _a[0]) ? parse_TST_TableDataList(M, M[parse_TSP_Reference(store2[17][0].data)][0]) : [];
+  var tile = parse_shallow(store2[3][0].data);
   var _R = 0;
   tile[1].forEach(function(t) {
     var tl = parse_shallow(t.data);
