@@ -51046,14 +51046,20 @@ function handleMouseMove(e) {
   dragEndIndex = currentIndex;
   const start = Math.min(dragStartIndex, dragEndIndex);
   const end = Math.max(dragStartIndex, dragEndIndex);
-  for (let i = start; i <= end; i++) {
-    const item = currentFileItems[i];
-    const checkbox = item.querySelector(".file-checkbox");
-    if (checkbox) {
-      checkbox.checked = true;
-      selectedFiles.add(checkbox.dataset.path);
+  currentFileItems.forEach((item, i) => {
+    if (i >= start && i <= end) {
+      item.classList.add("drag-over");
+    } else {
+      item.classList.remove("drag-over");
     }
-  }
+    if (i >= start && i <= end) {
+      const checkbox = item.querySelector(".file-checkbox");
+      if (checkbox) {
+        checkbox.checked = true;
+        selectedFiles.add(checkbox.dataset.path);
+      }
+    }
+  });
   updateMultiDeleteUI();
 }
 function handleMouseUp() {
@@ -51062,6 +51068,9 @@ function handleMouseUp() {
     dragStartIndex = -1;
     dragEndIndex = -1;
   }
+  currentFileItems.forEach((item) => {
+    item.classList.remove("drag-over");
+  });
 }
 function loadTemplateFromQuick(item) {
   templatePath = item.path;
