@@ -14,7 +14,7 @@ This template should help get you started developing with Tauri in vanilla HTML,
 
 ## How to Use
 
-**Templator X** is a desktop application that generates multiple DOCX documents from a single template and a data file (CSV or XLSX). Follow the steps below to get started.
+**TemplatorX** is a desktop application that generates multiple DOCX documents from a single template and a data file (CSV or XLSX). Follow the steps below to get started.
 
 ---
 

@@ -3,7 +3,7 @@ name: Build TemplatorX (Tauri)
 on:
   push:
     tags:
-      - "v*.*.*"  # Unique tag pattern to avoid conflicts with FileCanvas
+      - "tx-v*.*.*"  # Unique tag pattern to avoid conflicts with FileCanvas
   workflow_dispatch:
 
 jobs:
