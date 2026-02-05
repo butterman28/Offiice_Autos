@@ -955,6 +955,7 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
  "tauri-plugin-shell",
+ "walkdir",
 ]
 
 [[package]]
